@@ -66,9 +66,9 @@ Client checks (after the client has been initialized, from its directory):
 
 ```bash
 bun ci
-bun run lint --if-present
-bun run format:check --if-present
-bun run typecheck --if-present
+bun run --if-present lint
+bun run --if-present format:check
+bun run --if-present typecheck
 bun test --if-present
 ```
 

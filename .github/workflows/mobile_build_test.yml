@@ -21,24 +21,21 @@ jobs:
       - name: Report placeholder
         if: steps.client.outputs.ready != 'true'
         run: echo "mobile/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/setup-node@v4
-        if: steps.client.outputs.ready == 'true'
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
+          bun-version: '1.4.2'
+
       - name: Install dependencies
-        if: steps.client.outputs.ready == 'true'
-        working-directory: mobile
-        run: npm ci
+        working-directory: web
+        run: bun ci
       - name: Run test
         if: steps.client.outputs.ready == 'true' && inputs.enable_tests
         working-directory: mobile
-        run: npm run test --if-present
+        run: bun run --if-present test
       - name: Run build
         if: steps.client.outputs.ready == 'true'
         working-directory: mobile
-        run: npm run build --if-present
+        run: bun run --if-present build
       - name: Detect native Android project
         id: android
         run: echo "ready=$(test -f mobile/android/gradlew && echo true || echo false)" >> "$GITHUB_OUTPUT"
