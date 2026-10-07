@@ -1,0 +1,53 @@
+/* Thème MyBrigitte : polices, couleurs, tailles et arrondis. */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  /* Polices */
+  --font-family: "Instrument Sans", system-ui, sans-serif;
+  --font-size-small: 13px;
+  --font-size-normal: 14px;
+  --font-size-large: 16px;
+  --font-size-title: 28px;
+
+  /* Couleurs */
+  --color-background: #fbf8f2;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f4efe6;
+  --color-border: #ece5d8;
+
+  --color-text: #1f2a22;
+  --color-text-secondary: #5c675f;
+  --color-text-muted: #8a938b;
+
+  --color-primary: #3f6b4e;
+  --color-primary-hover: #345a41;
+  --color-primary-soft: #e3ede5;
+
+  --color-accent: #d9a441;
+  --color-accent-text: #9a6b12;
+
+  --color-success: #1d5560;
+  --color-success-soft: #dceef0;
+  --color-warning: #6e4a05;
+  --color-warning-soft: #fbebc8;
+  --color-danger: #b42318;
+  --color-danger-soft: #f8dad5;
+
+  /* Couleurs des avatars */
+  --avatar-1-background: #e3ede5;
+  --avatar-1-text: #3f6b4e;
+  --avatar-2-background: #fbebc8;
+  --avatar-2-text: #6e4a05;
+  --avatar-3-background: #dceef0;
+  --avatar-3-text: #1d5560;
+  --avatar-4-background: #f3e1da;
+  --avatar-4-text: #8a3a22;
+  --avatar-5-background: #e7e3f0;
+  --avatar-5-text: #4b3f72;
+  --avatar-6-background: #f4e3ea;
+  --avatar-6-text: #7d2e4f;
+
+  /* Formes */
+  --radius-small: 4px;
+  --radius-card: 6px;
+}
