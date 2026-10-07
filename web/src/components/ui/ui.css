@@ -1,0 +1,232 @@
+/* Styles des composants de components/ui. Toutes les valeurs viennent de styles/theme.css */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Icône ou logo placé dans un bouton */
+.button-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.button-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.button-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.button-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger-soft);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: var(--font-size-small);
+  font-weight: 500;
+}
+
+/* Le conteneur prend l'apparence du champ */
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+/* :focus-within = le conteneur s'allume quand l'input à l'intérieur a le focus */
+.input-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.input-icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+/* L'input lui-même devient invisible : il prend juste toute la place restante */
+.input-control {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 12px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-small);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-neutral { background: var(--color-surface-alt); color: var(--color-text-secondary); }
+.badge-success { background: var(--color-success-soft); color: var(--color-success); }
+.badge-warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.badge-danger { background: var(--color-danger-soft); color: var(--color-danger); }
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.card {
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  position: relative;
+}
+
+.card-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 2%;
+  width: 96%;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.card-header h2 {
+  font-size: var(--font-size-large);
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 20px 24px;
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+.stat-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.stat-unit {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-normal);
+  font-weight: 500;
+}
+
+.stat-detail {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.avatar-color-1 { background: var(--avatar-1-background); color: var(--avatar-1-text); }
+.avatar-color-2 { background: var(--avatar-2-background); color: var(--avatar-2-text); }
+.avatar-color-3 { background: var(--avatar-3-background); color: var(--avatar-3-text); }
+.avatar-color-4 { background: var(--avatar-4-background); color: var(--avatar-4-text); }
+.avatar-color-5 { background: var(--avatar-5-background); color: var(--avatar-5-text); }
+.avatar-color-6 { background: var(--avatar-6-background); color: var(--avatar-6-text); }
+
+.avatar-small { width: 24px; height: 24px; font-size: 9px; }
+.avatar-medium { width: 32px; height: 32px; font-size: 12px; }
+.avatar-large { width: 56px; height: 56px; font-size: 21px; }
+
+/* <progress> natif : on enlève l'apparence du navigateur puis on stylise la piste et le remplissage */
+.progress {
+  width: 100%;
+  height: 6px;
+  border: none;
+  border-radius: 3px;
+  background: var(--color-surface-alt);
+  overflow: hidden;
+  appearance: none;
+}
+
+.progress::-webkit-progress-bar {
+  background: var(--color-surface-alt);
+}
+
+.progress::-webkit-progress-value {
+  background: var(--color-primary);
+}
+
+.progress::-moz-progress-bar {
+  background: var(--color-primary);
+}
+
+.logo {
+  align-self: flex-start;
+  width: auto;
+}
+
+.logo-small { height: 24px; }
+.logo-medium { height: 36px; }
+.logo-large { height: 56px; }
