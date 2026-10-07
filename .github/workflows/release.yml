@@ -28,3 +28,7 @@ jobs:
     uses: ./.github/workflows/web_build_test.yml
   mobile:
     uses: ./.github/workflows/mobile_build_test.yml
+  mirror:
+    needs: [backend, web, mobile]
+    uses: ./.github/workflows/mirror.yml
+    secrets: inherit
