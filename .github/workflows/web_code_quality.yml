@@ -18,10 +18,12 @@ jobs:
         if: steps.client.outputs.ready != 'true'
         run: echo "web/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
       - uses: oven-sh/setup-bun@v2
+        if: steps.client.outputs.ready == 'true'
         with:
           bun-version: '1.4.2'
 
       - name: Install dependencies
+        if: steps.client.outputs.ready == 'true'
         working-directory: web
         run: bun ci
       - name: Run lint
