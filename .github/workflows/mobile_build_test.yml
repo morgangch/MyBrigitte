@@ -1,0 +1,61 @@
+name: React Native Build & Test
+
+on:
+  workflow_call:
+    inputs:
+      enable_tests:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect initialized client
+        id: client
+        run: echo "ready=$(test -f mobile/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Report placeholder
+        if: steps.client.outputs.ready != 'true'
+        run: echo "mobile/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+
+      - name: Install dependencies
+        working-directory: web
+        run: bun ci
+      - name: Run test
+        if: steps.client.outputs.ready == 'true' && inputs.enable_tests
+        working-directory: mobile
+        run: |
+          if jq -e '.scripts.test | type == "string"' package.json > /dev/null; then
+            bun run test
+          else
+            echo "mobile: no test script configured; tests skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Run build
+        if: steps.client.outputs.ready == 'true'
+        working-directory: mobile
+        run: bun run --if-present build
+      - name: Detect native Android project
+        id: android
+        run: echo "ready=$(test -f mobile/android/gradlew && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build Android debug APK
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        working-directory: mobile/android
+        run: bash ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        with:
+          name: mobile-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

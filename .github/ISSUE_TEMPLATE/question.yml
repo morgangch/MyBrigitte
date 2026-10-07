@@ -1,0 +1,36 @@
+name: ❓ Question
+description: Ask a question or request clarification.
+title: "[QUESTION] : "
+labels: ["question"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for asking a question!
+        Please provide clear and specific information to help us give you the best answer.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: ❓ Your Question
+      description: >
+        Be as clear and specific as possible. Provide context about what you're trying to achieve.
+      placeholder: What is the expected behavior of X?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 🔍 Additional Context
+      description: >
+        Provide any additional information that might be relevant to your question.
+      placeholder: |
+        - What have you already tried?
+        - Are there any error messages?
+        - Links to relevant documentation or code
+        - Your current setup or environment details
+    validations:
+      required: false

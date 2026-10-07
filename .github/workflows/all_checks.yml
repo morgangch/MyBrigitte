@@ -1,0 +1,69 @@
+name: All Checks - MyBrigitte
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      skip_tests:
+        type: boolean
+        default: false
+      strict_validation:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        type: boolean
+        default: false
+      strict_validation:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository_validation:
+    uses: ./.github/workflows/repository_validation.yml
+    with:
+      strict_mode: ${{ inputs.strict_validation || false }}
+  backend_code_quality:
+    needs: [repository_validation]
+    uses: ./.github/workflows/backend_code_quality.yml
+  backend_build_test:
+    needs: [repository_validation]
+    uses: ./.github/workflows/backend_build_test.yml
+    with:
+      enable_tests: ${{ !inputs.skip_tests }}
+  web_code_quality:
+    needs: [repository_validation]
+    uses: ./.github/workflows/web_code_quality.yml
+  web_build_test:
+    needs: [repository_validation]
+    uses: ./.github/workflows/web_build_test.yml
+    with:
+      enable_tests: ${{ !inputs.skip_tests }}
+  mobile_code_quality:
+    needs: [repository_validation]
+    uses: ./.github/workflows/mobile_code_quality.yml
+  mobile_build_test:
+    needs: [repository_validation]
+    uses: ./.github/workflows/mobile_build_test.yml
+    with:
+      enable_tests: ${{ !inputs.skip_tests }}
+  quality_gate:
+    name: Quality Gate Decision
+    if: always()
+    needs: [repository_validation, backend_code_quality, backend_build_test, web_code_quality, web_build_test, mobile_code_quality, mobile_build_test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all checks to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"' >> "$GITHUB_STEP_SUMMARY"
+          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' > /dev/null

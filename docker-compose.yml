@@ -1,0 +1,10 @@
+name: mybrigitte
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.prod
+    image: mybrigitte-backend:local
+    ports:
+      - "3001:3001"

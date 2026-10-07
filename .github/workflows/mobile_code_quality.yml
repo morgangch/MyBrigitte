@@ -1,0 +1,38 @@
+name: React Native Code & Quality
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect initialized client
+        id: client
+        run: echo "ready=$(test -f mobile/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Report placeholder
+        if: steps.client.outputs.ready != 'true'
+        run: echo "mobile/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+
+      - name: Install dependencies
+        working-directory: web
+        run: bun ci
+      - name: Run lint
+        if: steps.client.outputs.ready == 'true'
+        working-directory: mobile
+        run: bun run --if-present lint
+      - name: Run format:check
+        if: steps.client.outputs.ready == 'true'
+        working-directory: mobile
+        run: bun run --if-present format:check
+      - name: Run typecheck
+        if: steps.client.outputs.ready == 'true'
+        working-directory: mobile
+        run: bun run --if-present typecheck

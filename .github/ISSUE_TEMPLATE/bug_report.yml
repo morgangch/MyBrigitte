@@ -1,0 +1,74 @@
+name: 🐛 Bug Report
+description: Report a bug or issue with the project.
+title: "[BUG] : "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug!
+        Please fill out the form below with **detailed information** to help us understand and reproduce the issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 📋 Prerequisites
+      description: Please confirm you have completed these steps before submitting
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have updated to the latest version / branch before reporting
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Description
+      description: >
+        Provide a clear and comprehensive description of the bug.
+        Include context about what you were doing, what you expected, and what actually happened.
+      placeholder: |
+        - What were you trying to accomplish?
+        - What did you expect to happen?
+        - What actually happened?
+        - Any error messages or unusual behavior observed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔍 Steps to Reproduce
+      description: >
+        List the steps to reproduce the bug.
+        Include any specific configurations or settings that are relevant.
+      placeholder: |
+        1. Step one
+        2. Step two
+        3. Step three
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: 📎 Additional Context
+      description: >
+        Add any other context, screenshots, logs, or files that might help.
+        Include links to related issues or relevant documentation.
+      placeholder: |
+        - Screenshots or screen recordings
+        - Log files or error traces
+        - Configuration files (remove sensitive data)
+        - Related issues or PRs
+        - Potential workarounds you've tried
+
+  - type: checkboxes
+    id: project_metadata
+    attributes:
+      label: 📂 Project Metadata (if applicable)
+      description: If linked to a GitHub Project board, confirm metadata will be filled.
+      options:
+        - label: I confirm that I will fill in the required fields in the linked GitHub Project, if applicable.
