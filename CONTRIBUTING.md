@@ -65,11 +65,11 @@ cargo test --workspace --locked
 Client checks (after the client has been initialized, from its directory):
 
 ```bash
-npm ci
-npm run lint --if-present
-npm run format:check --if-present
-npm run typecheck --if-present
-npm test --if-present
+bun ci
+bun run lint --if-present
+bun run format:check --if-present
+bun run typecheck --if-present
+bun test --if-present
 ```
 
 ---

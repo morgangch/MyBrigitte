@@ -27,8 +27,12 @@ jobs:
             test -d "$client" || { echo "::error::Missing $client/"; exit 1; }
             if [ -f "$client/package.json" ]; then
               jq -e 'type == "object"' "$client/package.json" > /dev/null
-              test -f "$client/package-lock.json" || { echo "::error::Missing $client/package-lock.json"; exit 1; }
-              jq -e 'type == "object"' "$client/package-lock.json" > /dev/null
+              if [ "$client" = web ]; then
+                test -s "$client/bun.lock" || { echo "::error::Missing or empty $client/bun.lock"; exit 1; }
+              else
+                test -f "$client/package-lock.json" || { echo "::error::Missing $client/package-lock.json"; exit 1; }
+                jq -e 'type == "object"' "$client/package-lock.json" > /dev/null
+              fi
             elif [ "$STRICT_MODE" = true ]; then
               echo "::error::Initialize $client before enabling strict validation"
               exit 1

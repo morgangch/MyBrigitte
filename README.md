@@ -32,6 +32,6 @@ The environment example describes future database and Microsoft OAuth settings; 
 
 ## Client setup
 
-The client directories are reserved for implementation. Initialize the web client in `web/` and the React Native app in `mobile/`. Commit each npm `package-lock.json` with its `package.json`. CI uses `npm ci` and runs available `lint`, `format:check`, `typecheck`, `test`, and `build` scripts. Test scripts must run once and exit in CI.
+The client directories are reserved for implementation. Initialize the web client in `web/` and the React Native app in `mobile/`. Commit each bun `package-lock.json` with its `package.json`. CI uses `bun ci` and runs available `lint`, `format:check`, `typecheck`, `test`, and `build` scripts. Test scripts must run once and exit in CI.
 
 For a native Android build, commit the React Native Android project and Gradle wrapper under `mobile/android/`. CI builds a debug APK with Java 17; signed release builds require a separate signing setup.
