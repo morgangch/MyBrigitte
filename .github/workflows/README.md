@@ -75,11 +75,15 @@ From an initialized client directory:
 ```bash
 npm ci
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f3bb5df (fix: correct command syntax for bun run in web build and code quality workflows)
 npm run --if-present lint
 npm run --if-present format:check
 npm run --if-present typecheck
 npm run --if-present test
 npm run --if-present build
+<<<<<<< HEAD
 =======
 npm run lint --if-present
 npm run format:check --if-present
@@ -87,6 +91,8 @@ npm run typecheck --if-present
 npm run test --if-present
 npm run build --if-present
 >>>>>>> 05dfcb1 (chore: initialize project structure, CI and backend Docker build)
+=======
+>>>>>>> f3bb5df (fix: correct command syntax for bun run in web build and code quality workflows)
 ```
 
 See [the project README](../../README.md), [contribution guidelines](../../CONTRIBUTING.md),
