@@ -1,10 +1,7 @@
 name: Repository Mirroring
 
 on:
-  push:
-    branches:
-      - 'main'
-      - "*/cicd/*"
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -24,7 +21,7 @@ jobs:
   push_to_mirror:
     name: "Mirror Repository"
     needs: [repository_validation]
-    if: ${{ github.event_name == 'push' && github.actor != 'github-actions[bot]' }}
+    if: ${{ github.actor != 'github-actions[bot]' && vars.MIRROR_URL != '' && github.event.repository.ssh_url != vars.MIRROR_URL }}
     runs-on: ubuntu-latest
 
     steps:
