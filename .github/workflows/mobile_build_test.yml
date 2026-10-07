@@ -31,7 +31,12 @@ jobs:
       - name: Run test
         if: steps.client.outputs.ready == 'true' && inputs.enable_tests
         working-directory: mobile
-        run: bun run --if-present test
+        run: |
+          if jq -e '.scripts.test | type == "string"' package.json > /dev/null; then
+            bun run test
+          else
+            echo "mobile: no test script configured; tests skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Run build
         if: steps.client.outputs.ready == 'true'
         working-directory: mobile
