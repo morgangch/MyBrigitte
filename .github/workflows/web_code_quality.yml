@@ -27,12 +27,12 @@ jobs:
       - name: Run lint
         if: steps.client.outputs.ready == 'true'
         working-directory: web
-        run: bun run lint --if-present
+        run: bun run --if-present lint
       - name: Run format:check
         if: steps.client.outputs.ready == 'true'
         working-directory: web
-        run: bun run format:check --if-present
+        run: bun run --if-present format:check
       - name: Run typecheck
         if: steps.client.outputs.ready == 'true'
         working-directory: web
-        run: bun run typecheck --if-present
+        run: bun run --if-present typecheck

@@ -56,11 +56,11 @@ From an initialized client directory:
 
 ```bash
 npm ci
-npm run lint --if-present
-npm run format:check --if-present
-npm run typecheck --if-present
-npm run test --if-present
-npm run build --if-present
+npm run --if-present lint
+npm run --if-present format:check
+npm run --if-present typecheck
+npm run --if-present test
+npm run --if-present build
 ```
 
 See [the project README](../../README.md), [contribution guidelines](../../CONTRIBUTING.md),
