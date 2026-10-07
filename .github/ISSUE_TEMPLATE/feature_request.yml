@@ -1,0 +1,50 @@
+name: 📌 Feature Request
+description: Suggest a new idea, improvement, or enhancement.
+title: "[FEATURE] : "
+labels: ["enhancement", "feature"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to propose a new feature!
+        Please fill out the form below to help us understand your idea.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 📋 Prerequisites
+      description: Please confirm you have completed these steps before submitting
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: 🎯 Feature Goal
+      description: What problem does this feature solve, or what value does it add?
+      placeholder: |
+        - What is the goal of this feature?
+        - Who benefits from it and how?
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: 🛠️ Suggested Implementation (optional)
+      description: Optionally describe how this could be implemented, or leave it to the development team.
+      placeholder: |
+        - High-level technical suggestion
+        - Related components / modules
+        - API or UX changes (if any)
+
+  - type: checkboxes
+    id: project_metadata
+    attributes:
+      label: 📂 Project Metadata (if applicable)
+      description: If linked to a GitHub Project board, confirm metadata will be filled.
+      options:
+        - label: I confirm that I will fill in the required fields in the linked GitHub Project, if applicable.

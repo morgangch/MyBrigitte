@@ -1,0 +1,40 @@
+name: Repository Validation
+
+on:
+  workflow_call:
+    inputs:
+      strict_mode:
+        description: Require initialized web and mobile clients
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Validate workspace and project structure
+        run: |
+          for file in Cargo.toml Cargo.lock backend/Cargo.toml backend/src/main.rs README.md CONTRIBUTING.md CODE_OF_CONDUCT.md backend/.env.example; do
+            test -f "$file" || { echo "::error::Missing $file"; exit 1; }
+          done
+          cargo metadata --no-deps --locked --format-version 1 > /dev/null
+          for client in web mobile; do
+            test -d "$client" || { echo "::error::Missing $client/"; exit 1; }
+            if [ -f "$client/package.json" ]; then
+              jq -e 'type == "object"' "$client/package.json" > /dev/null
+              test -f "$client/package-lock.json" || { echo "::error::Missing $client/package-lock.json"; exit 1; }
+              jq -e 'type == "object"' "$client/package-lock.json" > /dev/null
+            elif [ "$STRICT_MODE" = true ]; then
+              echo "::error::Initialize $client before enabling strict validation"
+              exit 1
+            else
+              echo "$client/ is a placeholder" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+        env:
+          STRICT_MODE: ${{ inputs.strict_mode }}

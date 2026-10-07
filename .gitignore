@@ -1,1 +1,35 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+**/mutants.out*/
+rustc-ice-*.txt
+
+# JavaScript and React Native
+node_modules/
+dist/
+coverage/
+.expo/
+.gradle/
+**/build/
+**/Pods/
+*.apk
+*.aab
+*.ipa
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+local.properties
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo

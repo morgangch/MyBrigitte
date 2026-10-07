@@ -1,0 +1,41 @@
+name: Web Build & Test
+
+on:
+  workflow_call:
+    inputs:
+      enable_tests:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect initialized client
+        id: client
+        run: echo "ready=$(test -f web/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Report placeholder
+        if: steps.client.outputs.ready != 'true'
+        run: echo "web/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        if: steps.client.outputs.ready == 'true'
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        if: steps.client.outputs.ready == 'true'
+        working-directory: web
+        run: npm ci
+      - name: Run test
+        if: steps.client.outputs.ready == 'true' && inputs.enable_tests
+        working-directory: web
+        run: npm run test --if-present
+      - name: Run build
+        if: steps.client.outputs.ready == 'true'
+        working-directory: web
+        run: npm run build --if-present

@@ -1,0 +1,43 @@
+name: 🗂️ Epic
+description: A large task or project that groups multiple related issues.
+title: "[EPIC] : "
+labels: ["epic"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This Epic represents a large feature or project that is broken down into multiple smaller issues.
+        Use this issue to track overall progress and link related sub-issues.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: 🎯 Epic Objective
+      description: Describe the main goal of this Epic. What is the big feature or outcome you want to achieve?
+      placeholder: |
+        - What problem or opportunity does this Epic address?
+        - What value will it deliver?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 📦 Scope
+      description: Define the scope of this Epic. List the main tasks or sub-issues it will include.
+      placeholder: |
+        - Task 1: ...
+        - Task 2: ...
+        - Task 3: ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: project_metadata
+    attributes:
+      label: 📂 Project Metadata (if applicable)
+      description: If linked to a GitHub Project board, confirm metadata will be filled.
+      options:
+        - label: I confirm that I will fill in the required fields in the linked GitHub Project, if applicable.

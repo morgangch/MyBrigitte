@@ -4,7 +4,6 @@ use serde_json::{Value, json};
 #[derive(Debug)]
 enum ApiError {
     NotFound,
-    InvalidInput(String),
     InternalError,
 }
 
@@ -12,7 +11,6 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let (status, error_message) = match self {
             ApiError::NotFound => (StatusCode::NOT_FOUND, "Data not found".to_string()),
-            ApiError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg),
             ApiError::InternalError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
@@ -99,10 +97,6 @@ mod tests {
     async fn test_api_error_into_response() {
         let test_cases = vec![
             (ApiError::NotFound, StatusCode::NOT_FOUND),
-            (
-                ApiError::InvalidInput("Bad data".to_string()),
-                StatusCode::BAD_REQUEST,
-            ),
             (ApiError::InternalError, StatusCode::INTERNAL_SERVER_ERROR),
         ];
 

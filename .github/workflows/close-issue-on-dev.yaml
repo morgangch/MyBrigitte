@@ -1,0 +1,68 @@
+name: Close issues on dev merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - dev
+
+jobs:
+  close-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: read
+
+    steps:
+      - name: Close referenced issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+
+            // Fetch all commits in the PR
+            const commits = await github.rest.pulls.listCommits({
+              ...context.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+            const commitMessages = commits.data.map(commit => commit.commit.message).join('\n');
+
+            // Fetch all PR comments
+            const comments = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+            const commentBodies = comments.data.map(comment => comment.body || "").join('\n');
+
+            // Aggregate all text sources
+            const allText = [body, commitMessages, commentBodies].join('\n');
+
+            // Extract issue numbers from all sources
+            const issueNumbers = [
+              ...allText.matchAll(/\b(?:Close[sd]?|Fix(?:e[sd])?|Resolve[sd]?)\s+#(\d+)/gi)
+            ].map(m => m[1]);
+
+            const uniqueIssueNumbers = [...new Set(issueNumbers)];
+
+            if (uniqueIssueNumbers.length === 0) {
+              console.log("No closing keywords found.");
+              return;
+            }
+
+            for (const number of uniqueIssueNumbers) {
+              console.log(`Closing issue #${number}`);
+              try {
+                await github.rest.issues.update({
+                  ...context.repo,
+                  issue_number: Number(number),
+                  state: 'closed'
+                });
+                console.log(`Successfully closed issue #${number}`);
+              } catch (error) {
+                console.error(`Failed to close issue #${number}: ${error.message}`);
+              }
+            }

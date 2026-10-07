@@ -1,0 +1,54 @@
+name: Repository Mirroring
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'dev'
+      - "*/cicd/*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repository_validation:
+    name: "Repository Validation"
+    uses: ./.github/workflows/repository_validation.yml
+    with:
+      strict_mode: false
+
+  push_to_mirror:
+    name: "Mirror Repository"
+    needs: [repository_validation]
+    if: ${{ github.event_name == 'push' && github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to external repository
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: ${{ vars.MIRROR_URL }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Report mirroring status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "## ✅ Repository Mirrored Successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Repository has been successfully mirrored to the target." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Mirroring Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Failed to mirror repository. Check the logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
