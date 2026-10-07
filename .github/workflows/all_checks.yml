@@ -5,6 +5,14 @@ on:
     branches: [main, dev, '*/cicd/*', 'feat/**']
   pull_request:
     branches-ignore: ['ga-ignore-*']
+  workflow_call:
+    inputs:
+      skip_tests:
+        type: boolean
+        default: false
+      strict_validation:
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       skip_tests:

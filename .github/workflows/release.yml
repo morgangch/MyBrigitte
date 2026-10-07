@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   checks:
-    uses: ./.github/workflows/backend_code_quality.yml
+    uses: ./.github/workflows/all_checks.yml
   backend:
     needs: [checks]
     runs-on: ubuntu-latest
@@ -24,11 +24,7 @@ jobs:
           name: mybrigitte-backend-linux-x86_64
           path: target/release/backend
           if-no-files-found: error
-  web:
-    uses: ./.github/workflows/web_build_test.yml
-  mobile:
-    uses: ./.github/workflows/mobile_build_test.yml
   mirror:
-    needs: [backend, web, mobile]
+    needs: [backend]
     uses: ./.github/workflows/mirror.yml
     secrets: inherit

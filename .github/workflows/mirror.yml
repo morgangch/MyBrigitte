@@ -12,15 +12,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  repository_validation:
-    name: "Repository Validation"
-    uses: ./.github/workflows/repository_validation.yml
-    with:
-      strict_mode: false
-
   push_to_mirror:
     name: "Mirror Repository"
-    needs: [repository_validation]
     if: ${{ github.actor != 'github-actions[bot]' && vars.MIRROR_URL != '' && github.event.repository.ssh_url != vars.MIRROR_URL }}
     runs-on: ubuntu-latest
 
