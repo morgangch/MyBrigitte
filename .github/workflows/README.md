@@ -19,7 +19,12 @@ the mobile client will use React Native.
 | [mobile_code_quality.yml](mobile_code_quality.yml) | Runs available React Native lint, format:check, and typecheck scripts. |
 | [mobile_build_test.yml](mobile_build_test.yml) | Runs available test and build scripts; builds a debug APK when the Android Gradle wrapper exists. |
 | [release.yml](release.yml) | Checks and builds a Linux Rust release binary and runs client build workflows on version tags or manual runs. |
+<<<<<<< HEAD
 | [mirror.yml](mirror.yml) | Mirrors the repository after a successful release build or on manual runs, using MIRROR_URL and SSH_PRIVATE_KEY. |
+=======
+| [mirror.yml](mirror.yml) | Validates the repository and mirrors pushes using MIRROR_URL and SSH_PRIVATE_KEY. |
+| [close-issue-on-dev.yaml](close-issue-on-dev.yaml) | Closes referenced issues when a pull request merges into dev. |
+>>>>>>> 05dfcb1 (chore: initialize project structure, CI and backend Docker build)
 
 Client workflows report placeholders and skip client commands until a package.json
 exists. Once initialized, npm ci requires a committed package-lock.json. Available
@@ -28,6 +33,7 @@ scripts are skipped; no client checks are claimed for unimplemented clients.
 Strict validation requires both clients to be initialized. The quality gate requires
 all component workflows to succeed, including build and test workflows.
 
+<<<<<<< HEAD
 Branch pushes do not trigger standalone checks. Opening or updating a pull request
 triggers all checks, including pull requests from dev to main. Manual runs remain
 available through all_checks.yml, release.yml, and mirror.yml; component workflows
@@ -36,6 +42,8 @@ To enforce the PR gate, configure branch protection or a ruleset to require pull
 requests and the Quality Gate Decision status check before merging into main
 (and dev if desired). Workflow configuration alone does not prevent merging.
 
+=======
+>>>>>>> 05dfcb1 (chore: initialize project structure, CI and backend Docker build)
 The release workflow uploads the backend binary and any Android debug APK as
 Actions artifacts. It does not publish a GitHub release or deploy services.
 Native iOS builds and signed Android releases require additional setup. Docker
@@ -56,11 +64,19 @@ From an initialized client directory:
 
 ```bash
 npm ci
+<<<<<<< HEAD
 npm run --if-present lint
 npm run --if-present format:check
 npm run --if-present typecheck
 npm run --if-present test
 npm run --if-present build
+=======
+npm run lint --if-present
+npm run format:check --if-present
+npm run typecheck --if-present
+npm run test --if-present
+npm run build --if-present
+>>>>>>> 05dfcb1 (chore: initialize project structure, CI and backend Docker build)
 ```
 
 See [the project README](../../README.md), [contribution guidelines](../../CONTRIBUTING.md),
