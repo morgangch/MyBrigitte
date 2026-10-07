@@ -8,3 +8,11 @@ services:
     image: mybrigitte-backend:local
     ports:
       - "3001:3001"
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.prod
+    image: mybrigitte-web:local
+    ports:
+      - "8081:80"

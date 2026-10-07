@@ -1,9 +1,19 @@
-name: Release Build
+name: Release Build & Deployment
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: Type of release
+        type: choice
+        options: [development, production]
+        default: development
+      skip_docker:
+        description: Skip Docker image builds and Compose test
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -11,20 +21,212 @@ permissions:
 jobs:
   checks:
     uses: ./.github/workflows/all_checks.yml
-  backend:
-    needs: [checks]
-    runs-on: ubuntu-latest
+
+  release_config:
+    runs-on: ubuntu-24.04
+    outputs:
+      release_type: ${{ steps.config.outputs.release_type }}
+      registry: ${{ steps.config.outputs.registry }}
+      mobile_ready: ${{ steps.config.outputs.mobile_ready }}
+      prerelease: ${{ steps.config.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - id: config
+        env:
+          REQUESTED_TYPE: ${{ inputs.release_type }}
+        run: |
+          release_type="${REQUESTED_TYPE:-production}"
+          echo "release_type=$release_type" >> "$GITHUB_OUTPUT"
+          echo "registry=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "mobile_ready=$(test -f mobile/package.json && test -f mobile/android/gradlew && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF_NAME" == *-rc* || "$GITHUB_REF_NAME" == *-beta* || "$GITHUB_REF_NAME" == *-alpha* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  backend:
+    needs: [checks, release_config]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --workspace --locked
       - run: cargo build -p backend --release --locked
-      - uses: actions/upload-artifact@v4
+      - name: Package backend binary
+        run: tar -czf mybrigitte-backend-linux-x86_64.tar.gz -C target/release backend
+      - uses: actions/upload-artifact@v7
         with:
           name: mybrigitte-backend-linux-x86_64
-          path: target/release/backend
+          path: mybrigitte-backend-linux-x86_64.tar.gz
           if-no-files-found: error
+          retention-days: ${{ needs.release_config.outputs.release_type == 'production' && 90 || 30 }}
+
+  build_web_artifacts:
+    needs: [checks, release_config]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - run: bun ci
+        working-directory: web
+      - run: bun --bun run build
+        working-directory: web
+      - name: Archive production bundle
+        working-directory: web
+        run: tar -czf web-dist.tar.gz dist/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-dist-${{ needs.release_config.outputs.release_type }}
+          path: web/web-dist.tar.gz
+          if-no-files-found: error
+          retention-days: ${{ needs.release_config.outputs.release_type == 'production' && 90 || 30 }}
+
+  test_docker_compose:
+    needs: [checks]
+    if: github.event_name == 'workflow_dispatch' && !inputs.skip_docker
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and start stack
+        run: docker compose up -d --build
+      - name: Check backend and web
+        run: |
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3001/health
+          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:8081/
+      - name: Report failure
+        if: failure()
+        run: docker compose logs
+      - name: Cleanup
+        if: always()
+        run: docker compose down --volumes
+
+  build_docker_images:
+    needs: [checks, release_config, test_docker_compose]
+    if: >-
+      ${{ !cancelled() && !inputs.skip_docker && needs.checks.result == 'success' &&
+          needs.release_config.result == 'success' &&
+          (needs.test_docker_compose.result == 'success' || needs.test_docker_compose.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            context: .
+            dockerfile: backend/Dockerfile.prod
+          - service: web
+            context: ./web
+            dockerfile: web/Dockerfile.prod
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ needs.release_config.outputs.registry }}/${{ matrix.service }}
+          flavor: latest=false
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+            type=raw,value=latest,enable=${{ needs.release_config.outputs.release_type == 'production' && needs.release_config.outputs.prerelease != 'true' }}
+            type=raw,value=latest-dev,enable=${{ needs.release_config.outputs.release_type == 'development' }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  create_release:
+    needs: [backend, build_web_artifacts, release_config, build_docker_images]
+    if: >-
+      ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') &&
+          needs.release_config.outputs.release_type == 'production' &&
+          needs.backend.result == 'success' && needs.build_web_artifacts.result == 'success' &&
+          (needs.build_docker_images.result == 'success' || (inputs.skip_docker && needs.build_docker_images.result == 'skipped')) }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: mybrigitte-backend-linux-x86_64
+          path: release-assets
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-dist-${{ needs.release_config.outputs.release_type }}
+          path: release-assets
+      - name: Download Android debug APK when available
+        if: needs.release_config.outputs.mobile_ready == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: mobile-debug-apk
+          path: release-assets
+      - name: Generate release notes
+        env:
+          REGISTRY: ${{ needs.release_config.outputs.registry }}
+          VERSION: ${{ github.ref_name }}
+          DOCKER_RESULT: ${{ needs.build_docker_images.result }}
+          MOBILE_READY: ${{ needs.release_config.outputs.mobile_ready }}
+        run: |
+          {
+            echo "# MyBrigitte $VERSION"
+            echo
+            echo '## Assets'
+            echo '- Backend: extract mybrigitte-backend-linux-x86_64.tar.gz and run ./backend (port 3001).'
+            echo '- Web: extract web-dist.tar.gz and serve dist/ using a static web server.'
+            if [ "$MOBILE_READY" = true ]; then
+              echo '- Android: debug APK for development; requires Metro. This is not a signed production build.'
+            else
+              echo '- Mobile: React Native project not initialized; no APK published.'
+            fi
+            if [ "$DOCKER_RESULT" = success ]; then
+              echo
+              echo '## Docker images'
+              echo '```bash'
+              echo "docker pull $REGISTRY/backend:$VERSION"
+              echo "docker pull $REGISTRY/web:$VERSION"
+              echo '```'
+              echo 'Backend listens on port 3001; web listens on port 80.'
+            fi
+          } > release_notes.md
+      - name: Publish GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          body_path: release_notes.md
+          generate_release_notes: true
+          files: release-assets/*
+          fail_on_unmatched_files: true
+          prerelease: ${{ needs.release_config.outputs.prerelease == 'true' }}
+      - name: Release summary
+        env:
+          RELEASE_URL: ${{ steps.release.outputs.url }}
+        run: echo "GitHub Release published at $RELEASE_URL" >> "$GITHUB_STEP_SUMMARY"
+
   mirror:
-    needs: [backend]
+    needs: [backend, build_web_artifacts, build_docker_images, create_release]
+    if: >-
+      ${{ !cancelled() && needs.backend.result == 'success' && needs.build_web_artifacts.result == 'success' &&
+          (needs.build_docker_images.result == 'success' || (inputs.skip_docker && needs.build_docker_images.result == 'skipped')) &&
+          (needs.create_release.result == 'success' || needs.create_release.result == 'skipped') }}
     uses: ./.github/workflows/mirror.yml
     secrets: inherit

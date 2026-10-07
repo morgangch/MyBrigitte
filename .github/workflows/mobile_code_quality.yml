@@ -17,12 +17,18 @@ jobs:
       - name: Report placeholder
         if: steps.client.outputs.ready != 'true'
         run: echo "mobile/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v6
+        if: steps.client.outputs.ready == 'true'
+        with:
+          node-version: '22'
       - uses: oven-sh/setup-bun@v2
+        if: steps.client.outputs.ready == 'true'
         with:
           bun-version: '1.4.2'
 
       - name: Install dependencies
-        working-directory: web
+        if: steps.client.outputs.ready == 'true'
+        working-directory: mobile
         run: bun ci
       - name: Run lint
         if: steps.client.outputs.ready == 'true'
