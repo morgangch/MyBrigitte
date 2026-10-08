@@ -1,20 +1,90 @@
-/* Classes de mise en page réutilisables */
-
+/* Contenu centré avec une largeur maximale */
 .page {
   max-width: 720px;
-  margin: 0 auto;
-  padding: 32px 16px;
+  margin: 40px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
+/* Éléments empilés verticalement */
 .stack {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+.stack-small {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Éléments côte à côte, centrés verticalement */
 .row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.row-large {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* AppLayout : sidebar et contenu côte à côte, sur toute la hauteur de l'écran */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Le contenu prend toute la place restante ; min-width: 0 évite qu'un tableau large le fasse déborder */
+.app-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 40px 48px;
+  gap: 24px;
+}
+
+/* En-tête de page : titre à gauche, boutons d'action à droite */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.page-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+/* Pages sans sidebar (connexion, 404) : formulaire centré dans l'écran */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }

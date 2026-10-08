@@ -1,61 +1,39 @@
-import Avatar from './components/ui/Avatar.jsx'
-import Badge from './components/ui/Badge.jsx'
-import Button from './components/ui/Button.jsx'
-import Card from './components/ui/Card.jsx'
-import Input from './components/ui/Input.jsx'
-import Logo from './components/ui/Logo.jsx'
-import ProgressBar from './components/ui/ProgressBar.jsx'
-import Select from './components/ui/Select.jsx'
-import Stat from './components/ui/Stat.jsx'
-
-const TEAMS = [
-  { value: 'design', label: 'Design' },
-  { value: 'rh', label: 'RH' },
-]
+import { Route, Routes } from 'react-router'
+import AppLayout from './layout/AppLayout.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
+import EmployeePage from './pages/EmployeePage.jsx'
+import HistoryPage from './pages/HistoryPage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
+import ReportsPage from './pages/ReportsPage.jsx'
+import TeamDetailPage from './pages/TeamDetailPage.jsx'
+import TeamsPage from './pages/TeamsPage.jsx'
+import UsersPage from './pages/UsersPage.jsx'
 
 export default function App() {
   return (
-    <main className="page stack">
-      <Logo />
+    <Routes>
+      {/* Page sans sidebar */}
+      <Route path="/login" element={<LoginPage />} />
 
-      <Card title="Boutons">
-        <div className="row">
-          <Button variant="primary">Pointer mon arrivée</Button>
-          <Button>Annuler</Button>
-          <Button variant="danger">Supprimer</Button>
-        </div>
-      </Card>
+      {/* Toutes ces pages partagent la sidebar (AppLayout + <Outlet />) */}
+      <Route element={<AppLayout />}>
+        {/* Mon espace */}
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
 
-      <Card title="Formulaire">
-        <div className="stack">
-          <Input label="Email" type="email" placeholder="prenom.nom@entreprise.com" />
-          <Input label="Mot de passe" type="password" error="Mot de passe incorrect" />
-          <Select label="Équipe" options={TEAMS} />
-        </div>
-      </Card>
+        {/* Management */}
+        <Route path="/users" element={<UsersPage />} />
+        <Route path="/users/:id" element={<EmployeePage />} />
+        <Route path="/teams" element={<TeamsPage />} />
+        <Route path="/teams/:id" element={<TeamDetailPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+      </Route>
 
-      <Card title="Badges et avatars">
-        <div className="stack">
-          <div className="row">
-            <Badge>Neutre</Badge>
-            <Badge tone="success">En poste</Badge>
-            <Badge tone="warning">En retard</Badge>
-            <Badge tone="danger">Absent</Badge>
-          </div>
-          <div className="row">
-            <Avatar name="Léa Martin" size="small" />
-            <Avatar name="Hugo Bernard" />
-            <Avatar name="Sarah Petit" size="large" />
-          </div>
-        </div>
-      </Card>
-
-      <Card title="Statistiques">
-        <div className="stack">
-          <Stat label="Cette semaine" value="13h31" unit="/ 35h" detail="39 % de l'objectif" />
-          <ProgressBar label="Progression de la semaine" value={39} />
-        </div>
-      </Card>
-    </main>
+      {/* Toute autre URL : page 404 */}
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   )
 }
