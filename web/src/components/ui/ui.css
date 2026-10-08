@@ -107,11 +107,21 @@ select.input {
 }
 
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 3px 8px;
   border-radius: var(--radius-small);
   font-size: 12px;
   font-weight: 500;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .badge-neutral { background: var(--color-surface-alt); color: var(--color-text-secondary); }
@@ -141,18 +151,9 @@ select.input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  position: relative;
-}
-
-.card-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 2%;
-  width: 96%;
-  height: 1px;
-  background-color: var(--color-border);
+  padding: 16px 0;
+  margin: 0 24px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .card-header h2 {
