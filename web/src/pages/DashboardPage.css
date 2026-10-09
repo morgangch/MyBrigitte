@@ -1,0 +1,11 @@
+.dashboard-info-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-info-cards {
+    grid-template-columns: 1fr;
+  }
+}

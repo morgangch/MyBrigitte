@@ -1,9 +1,9 @@
 import './ui.css'
 
-// variant : "primary" | "danger"
-export default function Button({ variant = 'secondary', children, ...props }) {
+// variant : "primary" | "secondary" | "danger"
+export default function Button({ variant = 'secondary', className = '', children, ...props }) {
   return (
-    <button type="button" className={`button button-${variant}`} {...props}>
+    <button type="button" className={`button button-${variant} ${className}`} {...props}>
       {children}
     </button>
   )
