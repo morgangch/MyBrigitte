@@ -20,7 +20,7 @@ export default function Sidebar() {
   return (
     <nav className="sidebar" aria-label="Navigation principale">
       <NavLink to="/" end style={{ paddingBottom: '20px' }}>
-        <Logo />
+        <Logo variant="horizontalDark" />
       </NavLink>
       {Object.entries(MENU).map(([sectionTitle, items]) => (
         <div key={sectionTitle} className="menu-section">

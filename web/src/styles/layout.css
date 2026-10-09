@@ -59,6 +59,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 20px;
 }
 
 .page-heading {
