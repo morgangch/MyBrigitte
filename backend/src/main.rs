@@ -1,3 +1,5 @@
+mod auth;
+
 use axum::{Json, Router, extract::Path, http::StatusCode, response::IntoResponse, routing::get};
 use serde_json::{Value, json};
 
