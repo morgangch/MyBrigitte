@@ -58,7 +58,6 @@
   background: var(--color-surface);
 }
 
-/* :focus-within = le conteneur s'allume quand l'input à l'intérieur a le focus */
 .input-wrapper:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-soft);
@@ -69,7 +68,6 @@
   color: var(--color-text-muted);
 }
 
-/* L'input lui-même devient invisible : il prend juste toute la place restante */
 .input-control {
   flex: 1;
   min-width: 0;
@@ -151,8 +149,7 @@ select.input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  margin: 0 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -231,3 +228,7 @@ select.input {
 .logo-small { height: 24px; }
 .logo-medium { height: 36px; }
 .logo-large { height: 56px; }
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}

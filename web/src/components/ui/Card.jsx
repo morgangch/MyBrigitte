@@ -1,7 +1,7 @@
 import './ui.css'
 
 // action : élément optionnel à droite du titre (lien, bouton…)
-export default function Card({ title, action, children }) {
+export default function Card({ title, action, className = '', children }) {
   return (
     <section className="card">
       {title && (
@@ -10,7 +10,7 @@ export default function Card({ title, action, children }) {
           {action}
         </header>
       )}
-      <div className="card-body">{children}</div>
+      <div className={`card-body ${className}`}>{children}</div>
     </section>
   )
 }
