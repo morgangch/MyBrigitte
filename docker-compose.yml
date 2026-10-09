@@ -8,6 +8,24 @@ services:
     image: mybrigitte-backend:local
     ports:
       - "3001:3001"
+    env_file:
+      - ./backend/.env
+      - ./.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-brigitte}:${POSTGRES_PASSWORD:-manu4ever}@postgres:5432/${POSTGRES_DB:-mybrigitte}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - mybrigitte-network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   web:
     build:
@@ -16,3 +34,39 @@ services:
     image: mybrigitte-web:local
     ports:
       - "8081:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-brigitte}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-manu4ever}
+      POSTGRES_DB: ${POSTGRES_DB:-mybrigitte}
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brigitte} -d ${POSTGRES_DB:-mybrigitte}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mybrigitte-network
+
+networks:
+  mybrigitte-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  apk_volume:
