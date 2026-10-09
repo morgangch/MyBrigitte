@@ -8,6 +8,7 @@ erDiagram
         string last_name "NOT NULL"
         string email UK "NOT NULL, unique case-insensitive"
         string phone_number "Nullable"
+        string password_hash "Nullable, Argon2id"
         string role "NOT NULL, employee ou manager"
         boolean is_active "NOT NULL DEFAULT true"
         timestamptz created_at "NOT NULL DEFAULT now()"
@@ -52,7 +53,6 @@ erDiagram
         uuid user_id FK "USERS(id)"
         string mode "NOT NULL, fixed ou flexible"
         integer expected_minutes_per_week "Nullable"
-        integer expected_minutes_per_day "Nullable"
         smallint default_break_minutes "NOT NULL DEFAULT 0"
         smallint late_tolerance_minutes "NOT NULL DEFAULT 5"
         date effective_from "NOT NULL"
@@ -69,15 +69,14 @@ erDiagram
         time end_time "NOT NULL"
         smallint break_minutes "NOT NULL DEFAULT 0"
     }
-
+    
     WORK_SCHEDULE_OVERRIDES {
         uuid id PK
         uuid user_id FK "USERS(id)"
-        date work_date "NOT NULL"
-        string override_type "paid_leave, rtt, day_off, custom_hours..."
-        time start_time "Nullable"
-        time end_time "Nullable"
-        smallint break_minutes "Nullable"
+        timestamptz starts_at "NOT NULL"
+        timestamptz ends_at "NOT NULL"
+        string effect "NOT NULL, add_work, remove_work"
+        string reason_type "leave, sick_leave, rtt, replacement, etc"
         text reason "Nullable"
         uuid created_by FK "USERS(id)"
         timestamptz created_at "NOT NULL DEFAULT now()"
@@ -117,4 +116,4 @@ erDiagram
     USERS ||--o{ WORK_SESSIONS : clocks
 
     USERS ||--o{ AUDIT_LOG : performs
-``` 
+```
