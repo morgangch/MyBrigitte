@@ -58,7 +58,6 @@
   background: var(--color-surface);
 }
 
-/* :focus-within = le conteneur s'allume quand l'input à l'intérieur a le focus */
 .input-wrapper:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-soft);
@@ -69,7 +68,6 @@
   color: var(--color-text-muted);
 }
 
-/* L'input lui-même devient invisible : il prend juste toute la place restante */
 .input-control {
   flex: 1;
   min-width: 0;
@@ -107,11 +105,21 @@ select.input {
 }
 
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 3px 8px;
   border-radius: var(--radius-small);
   font-size: 12px;
   font-weight: 500;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .badge-neutral { background: var(--color-surface-alt); color: var(--color-text-secondary); }
@@ -142,17 +150,7 @@ select.input {
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  position: relative;
-}
-
-.card-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 2%;
-  width: 96%;
-  height: 1px;
-  background-color: var(--color-border);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .card-header h2 {
@@ -230,3 +228,7 @@ select.input {
 .logo-small { height: 24px; }
 .logo-medium { height: 36px; }
 .logo-large { height: 56px; }
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
