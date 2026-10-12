@@ -1,36 +1,45 @@
-   use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
-   use serde::{Deserialize, Serialize};
-   use std::time::{SystemTime, UNIX_EPOCH};
 
-   const ACCESS_TOKEN_DURATION_SECONDS: usize = 15 * 60;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-   #[derive(Debug, Serialize, Deserialize)]
-   pub struct Claims {
-       pub sub: String,
-       pub exp: usize,
-       pub iat: usize,
-   }
-   pub fn create_token(user_id: &str, secret: &str) -> Result<String, String> {
-       let now = SystemTime::now()
-           .duration_since(UNIX_EPOCH)
-           .map_err(|error| error.to_string())?
-           .as_secs() as usize;
+const ACCESS_TOKEN_DURATION_SECONDS: usize = 15 * 60;
 
-       let claims = Claims {
-           sub: user_id.to_string(),
-           iat: now,
-           exp: now + ACCESS_TOKEN_DURATION_SECONDS,
-       };
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
+    pub iat: usize,
+}
+pub fn create_token(user_id: &str, secret: &str) -> Result<String, String> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| error.to_string())?
+        .as_secs() as usize;
 
-       encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_bytes()))
-           .map_err(|error| error.to_string())
-   }
-      pub fn verify_token(token: &str, secret: &str) -> Option<Claims> {
-       decode::<Claims>(token, &DecodingKey::from_secret(secret.as_bytes()), &Validation::default())
-           .ok()
-           .map(|data| data.claims)
-   }
-   #[cfg(test)]
+    let claims = Claims {
+        sub: user_id.to_string(),
+        iat: now,
+        exp: now + ACCESS_TOKEN_DURATION_SECONDS,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .map_err(|error| error.to_string())
+}
+pub fn verify_token(token: &str, secret: &str) -> Option<Claims> {
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::default(),
+    )
+    .ok()
+    .map(|data| data.claims)
+}
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -61,8 +70,17 @@ mod tests {
 
     #[test]
     fn expired_token_is_rejected() {
-        let claims = Claims { sub: "42".to_string(), iat: 0, exp: 1 };
-        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET.as_bytes())).unwrap();
+        let claims = Claims {
+            sub: "42".to_string(),
+            iat: 0,
+            exp: 1,
+        };
+        let token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(SECRET.as_bytes()),
+        )
+        .unwrap();
         assert!(verify_token(&token, SECRET).is_none());
     }
 

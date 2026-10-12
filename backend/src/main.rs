@@ -7,6 +7,11 @@ use serde_json::{Value, json};
 enum ApiError {
     NotFound,
     InternalError,
+    Unauthorized,
+}
+#[derive(Clone)]
+struct AppState {
+    jwt_secret: String,
 }
 
 impl IntoResponse for ApiError {
@@ -17,6 +22,7 @@ impl IntoResponse for ApiError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
             ),
+            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
         };
 
         let body = Json(json!({
@@ -45,16 +51,18 @@ async fn get_user(Path(id): Path<u32>) -> Result<Json<Value>, ApiError> {
     Ok(Json(json!({"id": id, "name": "User"})))
 }
 
-fn create_app() -> Router {
+fn create_app(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health_check))
         .route("/users", get(list_users))
         .route("/users/{id}", get(get_user))
+        .with_state(state)
 }
 
 #[tokio::main]
 async fn main() {
-    let app = create_app();
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let app = create_app(AppState { jwt_secret });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3001")
         .await
@@ -77,7 +85,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_health_check() {
-        let app = create_app();
+        let app = create_app(AppState {
+            jwt_secret: "secret-de-test".to_string(),
+        });
 
         let request = Request::builder()
             .uri("/health")
@@ -100,6 +110,7 @@ mod tests {
         let test_cases = vec![
             (ApiError::NotFound, StatusCode::NOT_FOUND),
             (ApiError::InternalError, StatusCode::INTERNAL_SERVER_ERROR),
+            (ApiError::Unauthorized, StatusCode::UNAUTHORIZED),
         ];
 
         for (error, expected_status) in test_cases {
