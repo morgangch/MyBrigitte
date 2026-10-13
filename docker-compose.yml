@@ -16,3 +16,17 @@ services:
     image: mybrigitte-web:local
     ports:
       - "8081:80"
+
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: brigitte
+      POSTGRES_PASSWORD: m4cron43v3r!!
+      POSTGRES_DB: mybrigittedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
