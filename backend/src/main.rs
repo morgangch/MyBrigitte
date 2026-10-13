@@ -4,7 +4,7 @@ use backend::create_app;
 #[tokio::main]
 async fn main() {
     let config = Config::from_env().expect("invalid configuration");
-    let app = create_app();
+    let app = create_app(config.clone());
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", config.port))
         .await
