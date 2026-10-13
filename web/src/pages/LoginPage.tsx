@@ -1,21 +1,21 @@
-import Logo from '../components/ui/Logo.jsx'
-import Input from '../components/ui/Input.jsx'
-import Button from '../components/ui/Button.jsx'
+import Logo from '../components/ui/Logo.tsx'
+import Input from '../components/ui/Input.tsx'
+import Button from '../components/ui/Button.tsx'
 import { Mail, Lock } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import microsoftLogo from '../assets/microsoft.svg'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 
 export default function LoginPage() {
-  const [errorMessage, setErrorMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
     const formData = new FormData(event.currentTarget)
-    const email = formData.get('email').trim()
-    const password = formData.get('password')
+    const email = String(formData.get('email') ?? '').trim()
+    const password = String(formData.get('password') ?? '')
     if (!email || !password) {
       setErrorMessage('Veuillez remplir tous les champs.')
       return

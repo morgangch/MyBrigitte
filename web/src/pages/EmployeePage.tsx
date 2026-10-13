@@ -1,5 +1,5 @@
 import { useParams } from 'react-router'
-import PageLayout from '../layout/PageLayout.jsx'
+import PageLayout from '../layout/PageLayout.tsx'
 
 export default function EmployeePage() {
   const { id } = useParams()

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import ClockHero from '../components/dashboard/ClockHero.jsx'
-import DashboardStats from '../components/dashboard/DashboardStats.jsx'
-import LastClockEvents from '../components/dashboard/LastClockEvents.jsx'
-import WeekChart from '../components/dashboard/WeekChart.jsx'
-import PageLayout from '../layout/PageLayout.jsx'
-import { formatDay, toDateKey } from '../lib/time.js'
-import { ME, MY_DAILY_SUMMARY, MY_SCHEDULE, MY_SUMMARY, MY_WORK_SESSIONS } from '../lib/fakeData.js'
+import ClockHero from '../components/dashboard/ClockHero.tsx'
+import DashboardStats from '../components/dashboard/DashboardStats.tsx'
+import LastClockEvents from '../components/dashboard/LastClockEvents.tsx'
+import WeekChart from '../components/dashboard/WeekChart.tsx'
+import PageLayout from '../layout/PageLayout.tsx'
+import { formatDay, toDateKey } from '../lib/time.ts'
+import { ME, MY_DAILY_SUMMARY, MY_SCHEDULE, MY_SUMMARY, MY_WORK_SESSIONS } from '../lib/fakeData.ts'
 import './DashboardPage.css'
 
 export default function DashboardPage() {

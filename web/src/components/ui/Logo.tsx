@@ -7,8 +7,12 @@ import './ui.css'
 
 const LOGOS = { horizontal, horizontalWhite, horizontalDark, symbol, stacked }
 
-// variant : "horizontal" | "horizontalWhite" | "horizontalDark" (texte noir) | "symbol" | "stacked"
-// size : "small" | "medium" | "large"
-export default function Logo({ variant = 'horizontal', size = 'medium' }) {
+type LogoProps = {
+  // horizontalDark = texte noir
+  variant?: keyof typeof LOGOS
+  size?: 'small' | 'medium' | 'large'
+}
+
+export default function Logo({ variant = 'horizontal', size = 'medium' }: LogoProps) {
   return <img className={`logo logo-${size}`} src={LOGOS[variant]} alt="MyBrigitte" />
 }

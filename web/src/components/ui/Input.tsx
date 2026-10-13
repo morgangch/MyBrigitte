@@ -1,7 +1,15 @@
-import { useId } from 'react'
+import { useId, type ComponentProps } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import './ui.css'
 
-export default function Input({ label, error, icon: Icon = null, ...props }) {
+// Toutes les props d'un <input> HTML (type, name, required…) + label, error et icône
+type InputProps = ComponentProps<'input'> & {
+  label: string
+  error?: string | null
+  icon?: LucideIcon | null
+}
+
+export default function Input({ label, error, icon: Icon = null, ...props }: InputProps) {
   const id = useId()
   return (
     <div className="field">

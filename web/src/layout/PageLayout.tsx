@@ -1,5 +1,13 @@
+import type { ReactNode } from 'react'
 
-export default function PageLayout({ title, subtitle, actions, children }) {
+type PageLayoutProps = {
+  title: string
+  subtitle?: string
+  actions?: ReactNode
+  children?: ReactNode
+}
+
+export default function PageLayout({ title, subtitle, actions, children }: PageLayoutProps) {
   return (
     <div className="page-layout">
       <header className="page-header">

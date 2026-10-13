@@ -1,7 +1,14 @@
 import './ui.css'
 
 // Un chiffre clé : "Cette semaine" / "13h31" / "/ 35h"
-export default function Stat({ label, value, unit, detail }) {
+type StatProps = {
+  label: string
+  value: string
+  unit?: string
+  detail?: string
+}
+
+export default function Stat({ label, value, unit, detail }: StatProps) {
   return (
     <div className="stat">
       <p className="stat-label">{label}</p>
