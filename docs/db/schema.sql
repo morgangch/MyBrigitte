@@ -1,23 +1,27 @@
--- Time Manager / Trinity — PostgreSQL schema proposal
--- Version: 2026-10-09
+-- Time Manager / Trinity — readable copy of the migrated PostgreSQL schema
+-- Version: 2026-10-13
 -- Convention: validity periods [valid_from, valid_until) (upper bound exclusive).
--- Important: this is a schema proposal, to be tested as a SeaORM migration.
+-- Reference only: the source of truth is the SeaORM migrations in migration/.
+-- Do not execute this file; update it together with any new migration.
 -- The app owns authorization (actor/team scope), account lifecycle and audit writes.
 
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+CREATE TYPE user_role AS ENUM ('employee', 'manager');
+CREATE TYPE work_policy_mode AS ENUM ('fixed', 'flexible');
 
 -- 1. USERS — internal identity. Manager accounts are created by managers,
 -- not through public self-registration. password_hash is NULL before activation
 -- or for an account using Microsoft sign-in only.
 CREATE TABLE users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    first_name text NOT NULL,
-    last_name text NOT NULL,
-    email text NOT NULL,
-    phone_number text,
-    password_hash text,
-    role text NOT NULL CHECK (role IN ('employee', 'manager')),
+    first_name varchar(100) NOT NULL,
+    last_name varchar(100) NOT NULL,
+    email varchar(254) NOT NULL,
+    phone_number varchar(20),
+    password_hash varchar(255),
+    role user_role NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
@@ -82,7 +86,7 @@ CREATE INDEX team_members_team_id_idx ON team_members(team_id);
 CREATE TABLE user_work_policies (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    mode text NOT NULL CHECK (mode IN ('fixed', 'flexible')),
+    mode work_policy_mode NOT NULL,
     expected_minutes_per_week integer CHECK (expected_minutes_per_week IS NULL OR expected_minutes_per_week >= 0),
     default_break_minutes smallint NOT NULL DEFAULT 0 CHECK (default_break_minutes >= 0),
     late_tolerance_minutes smallint NOT NULL DEFAULT 5 CHECK (late_tolerance_minutes >= 0),

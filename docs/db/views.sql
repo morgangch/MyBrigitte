@@ -1,4 +1,5 @@
--- Time Manager / Trinity — views for authorization scope and KPIs
+-- Time Manager / Trinity — readable copy of the scope views.
+-- Created by migration m20261013_000008_create_scope_views. Do not execute this file.
 -- These are ordinary views (live computation), NOT materialized views.
 
 -- v_team_hierarchy: self (depth 0) and every descendant team.

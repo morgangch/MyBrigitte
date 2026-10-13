@@ -1,6 +1,6 @@
 # Time Manager — Architecture BDD retenue
 
-> Proposition consolidée des décisions d'équipe au **9 octobre 2026**, à valider techniquement avant les migrations SeaORM. PostgreSQL, Axum/SeaORM, React web et React Native prévu.
+> Décisions d'équipe du **9 octobre 2026**, implémentées par les migrations SeaORM du **13 octobre 2026**. PostgreSQL, Axum/SeaORM, React web et React Native prévu. Les points encore ouverts sont en fin de document.
 >
 > Périmètre volontaire : **une pointeuse**, pas un ERP/RH. On ne suit pas obligatoirement la nature d'un congé, les droits à congés ou les pièces justificatives.
 
@@ -16,19 +16,19 @@
 - Les pauses sont **explicitement pointées** par arrêt/reprise des sessions ; `expected_break_minutes` conserve la durée prévue. Les trous entre sessions ne prouvent pas automatiquement qu'il s'agit de pauses déjeuner.
 - Microsoft Entra / OIDC + mot de passe local (hash Argon2id côté backend). Comptes créés par un manager, sans inscription libre. `AUTH_SESSIONS` permet refresh et révocation ; `AUDIT_LOG` retrace les corrections.
 
-## Diagramme ER — modèle définitif proposé
+## Diagramme ER
 
 ```mermaid
 erDiagram
     direction TB
     USERS {
         uuid id PK
-        text first_name
-        text last_name
-        text email UK
-        text phone_number "nullable"
-        text password_hash "nullable - Argon2id"
-        text role "employee | manager"
+        varchar first_name "max 100"
+        varchar last_name "max 100"
+        varchar email UK "max 254"
+        varchar phone_number "nullable, max 20"
+        varchar password_hash "nullable, max 255, Argon2id"
+        user_role role "employee | manager"
         boolean is_active
         timestamptz created_at
         timestamptz updated_at
@@ -65,7 +65,7 @@ erDiagram
     USER_WORK_POLICIES {
         uuid id PK
         uuid user_id FK
-        text mode "fixed | flexible"
+        work_policy_mode mode "fixed | flexible"
         integer expected_minutes_per_week "nullable"
         smallint default_break_minutes
         smallint late_tolerance_minutes
@@ -133,7 +133,7 @@ flowchart TB
     A --> KPI
 ```
 
-**Les deux vues `v_team_hierarchy` et `v_manager_scope` sont définies dans `views.sql`.** Les deux vues journalières sont des projections proposées, **non implémentées ici** : leur calcul dépend de décisions restantes sur fuseau, journées à cheval sur minuit et analyse des absences. Pour les KPIs demandant une période précise, une requête SQL paramétrée (ou une fonction SQL) est souvent plus propre qu'une vue globale générant toutes les dates.
+**Les deux vues `v_team_hierarchy` et `v_manager_scope` sont créées par la migration `m20261013_000008_create_scope_views`.** [`views.sql`](views.sql) en est la copie lisible. Les deux vues journalières sont des projections proposées, **non implémentées** : leur calcul dépend de décisions restantes sur fuseau, journées à cheval sur minuit et analyse des absences. Pour les KPIs demandant une période précise, une requête SQL paramétrée (ou une fonction SQL) est souvent plus propre qu'une vue globale générant toutes les dates.
 
 ## Fonctionnement par table
 
@@ -196,7 +196,7 @@ Historique générique old/new JSONB, auteur, événement métier et justificati
 | **Pas de table de corrections** | Audit JSONB général suffisant si justification, identité et atomicité garanties. |
 | **Vues non matérialisées** | Le périmètre de droits doit suivre immédiatement un changement d'organigramme ; les agrégats lourds pourront être optimisés plus tard. |
 
-## Conditions de validation avant `sea-orm-migration`
+## Points encore ouverts
 
 1. **Préciser le fuseau horaire métier**, notamment pour les horaires nocturnes et la date locale d'un pointage.
 2. **Garantir l'absence de cycles** dans l'arbre des équipes, y compris en cas de réorganisation concurrente.
@@ -207,10 +207,10 @@ Historique générique old/new JSONB, auteur, événement métier et justificati
 7. **Préciser suppression/rétention des comptes et audit** selon le sujet et les règles applicables.
 8. **Confirmer la règle souple/fixe** : une policy flexible sans schedule impose seulement un objectif hebdomadaire ; pas d'alerte de retard sans horaire prévu.
 
-## Proposition d'implémentation
+## Suite
 
-1. Migration SeaORM pour les tables et index/contraintes (les parties PostgreSQL spécifiques peuvent passer en SQL brut).
-2. Migration distincte pour les vues de hiérarchie/périmètre.
-3. Services Axum transactionnels : validation de droits, changement des règles de planning, correction des pointages avec audit.
-4. Tests d'intégration PostgreSQL sur les cas temporels et hiérarchiques ci-dessus.
-5. KPIs journaliers paramétrés ensuite, sur le modèle **prévu vs effectivement pointé** et sans assimiler automatiquement un trou à un congé ou une pause.
+Les tables, index, contraintes et vues de périmètre sont dans [`migration/`](../migration/). Il reste :
+
+1. Services Axum transactionnels : validation de droits, changement des règles de planning, correction des pointages avec audit.
+2. Tests d'intégration PostgreSQL sur les cas temporels et hiérarchiques ci-dessus.
+3. KPIs journaliers paramétrés ensuite, sur le modèle **prévu vs effectivement pointé** et sans assimiler automatiquement un trou à un congé ou une pause.

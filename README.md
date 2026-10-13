@@ -5,8 +5,8 @@ Time management project with a Rust backend and web and mobile clients.
 ## Project structure
 
 - [backend/](backend/): Rust API using Axum. SeaORM is the database layer; the API does not query Postgres yet.
-- [migration/](migration/): SeaORM migrations. The applied schema is the `users` table.
-- [docs/db/](docs/db/): proposed schema for the remaining tables. Only `users` is migrated.
+- [migration/](migration/): SeaORM migrations. They define the whole Postgres schema (9 tables, 2 views).
+- [docs/](docs/): data model, design decisions, SeaORM migration guide, and backend test layout.
 - [web/](web/): web client placeholder.
 - [mobile/](mobile/): React Native client placeholder.
 - [Workflow documentation](.github/workflows/README.md): CI checks and release artifacts.
@@ -59,15 +59,15 @@ cargo run -p migration -- down
 cargo run -p migration -- generate <name>
 ```
 
-`up` applies pending migrations. `down` reverts the last one. `status` lists them. Applied versions are stored in the `seaql_migrations` table. The full command list is in [migration/README.md](migration/README.md).
+`up` applies pending migrations. `down` reverts the last one. `status` lists them. Applied versions are stored in the `seaql_migrations` table. The full command list is in [docs/sea-orm.md](docs/sea-orm.md).
 
-The first migration creates the `user_role` enum (`employee`, `manager`) and the `users` table. Inspect it with:
+The migrations create the 9 tables and 2 views described in [docs/](docs/). List them with:
 
 ```bash
-docker compose exec -T postgres psql -U brigitte -d mybrigittedb -c '\d+ users'
+docker compose exec -T postgres psql -U brigitte -d mybrigittedb -c '\d'
 ```
 
-[docs/db/schema.sql](docs/db/schema.sql) is the proposal for the other tables. Do not execute that file on this database: add a new migration instead.
+[docs/schema.sql](docs/schema.sql) is a readable reference only. Do not execute it: every schema change is a new migration. The migration list and conventions are in [docs/sea-orm.md](docs/sea-orm.md).
 
 ## Client setup
 
