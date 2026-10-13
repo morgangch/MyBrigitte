@@ -9,6 +9,7 @@ use serde_json::json;
 pub enum ApiError {
     NotFound,
     InternalError,
+    Unauthorized,
 }
 
 impl IntoResponse for ApiError {
@@ -19,6 +20,7 @@ impl IntoResponse for ApiError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),
             ),
+            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
         };
 
         let body = Json(json!({
@@ -38,6 +40,7 @@ mod tests {
         let test_cases = vec![
             (ApiError::NotFound, StatusCode::NOT_FOUND),
             (ApiError::InternalError, StatusCode::INTERNAL_SERVER_ERROR),
+            (ApiError::Unauthorized, StatusCode::UNAUTHORIZED),
         ];
 
         for (error, expected_status) in test_cases {
