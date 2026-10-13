@@ -1,6 +1,6 @@
 // "2026-10-05T08:05:00" -> "Lundi 5 octobre"
 // Avec relative = true : "Aujourd'hui" ou "Hier"
-export function formatDay(date, relative = false) {
+export function formatDay(date: string | Date, relative = false) {
   if (relative) {
     const now = new Date()
     const yesterday = new Date(now)
@@ -15,12 +15,12 @@ export function formatDay(date, relative = false) {
 }
 
 // Secondes écoulées entre `start` et `now`
-export function elapsedSeconds(start, now) {
-  return Math.max(0, Math.floor((now - new Date(start)) / 1000))
+export function elapsedSeconds(start: string, now: Date) {
+  return Math.max(0, Math.floor((now.getTime() - new Date(start).getTime()) / 1000))
 }
 
 // 12003 -> { hours: 3, minutes: 20, seconds: 3 }
-export function splitDuration(totalSeconds) {
+export function splitDuration(totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
@@ -28,18 +28,18 @@ export function splitDuration(totalSeconds) {
 }
 
 // "2026-10-09T06:52:00.000Z" -> "08:52"
-export function formatTime(date) {
+export function formatTime(date: string | Date) {
   return new Date(date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
 // 25200 -> "7h00"
-export function formatDuration(totalSeconds) {
+export function formatDuration(totalSeconds: number) {
   const { hours, minutes } = splitDuration(totalSeconds)
   return `${hours}h${minutes.toString().padStart(2, '0')}`
 }
 
 // "2026-10-09T06:52:00.000Z" -> "2026-10-09"
-export function toDateKey(date) {
+export function toDateKey(date: Date) {
   const year = date.getFullYear().toString().padStart(2, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
   const day = date.getDate().toString().padStart(2, '0')

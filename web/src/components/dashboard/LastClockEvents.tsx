@@ -1,20 +1,32 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
-import Card from '../ui/Card.jsx'
-import { formatDay, formatTime } from '../../lib/time.js'
+import Card from '../ui/Card.tsx'
+import { formatDay, formatTime } from '../../lib/time.ts'
+import type { WorkSession } from '../../types/api.ts'
 import './LastClockEvents.css'
 
-function getLastEvents(sessions, limit) {
+type ClockEvent = {
+  sessionId: string
+  type: 'arrival' | 'departure'
+  time: string
+}
+
+function getLastEvents(sessions: WorkSession[], limit: number): ClockEvent[] {
   return sessions
-    .flatMap((session) => [
+    .flatMap((session): ClockEvent[] => [
       { sessionId: session.id, type: 'arrival', time: session.start_time },
-      ...(session.end_time ? [{ sessionId: session.id, type: 'departure', time: session.end_time }] : []),
+      ...(session.end_time ? [{ sessionId: session.id, type: 'departure' as const, time: session.end_time }] : []),
     ])
-    .sort((a, b) => new Date(b.time) - new Date(a.time))
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
     .slice(0, limit)
 }
 
-export default function LastClockEvents({ sessions, limit = 4 }) {
+type LastClockEventsProps = {
+  sessions: WorkSession[]
+  limit?: number
+}
+
+export default function LastClockEvents({ sessions, limit = 4 }: LastClockEventsProps) {
   const lastEvents = getLastEvents(sessions, limit)
 
   return (

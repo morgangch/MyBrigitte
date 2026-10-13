@@ -1,11 +1,18 @@
-import Card from '../ui/Card.jsx'
-import ProgressBar from '../ui/ProgressBar.jsx'
-import Stat from '../ui/Stat.jsx'
-import useNow from '../../hooks/useNow.js'
-import { elapsedSeconds, formatDuration } from '../../lib/time.js'
+import Card from '../ui/Card.tsx'
+import ProgressBar from '../ui/ProgressBar.tsx'
+import Stat from '../ui/Stat.tsx'
+import useNow from '../../hooks/useNow.ts'
+import { elapsedSeconds, formatDuration } from '../../lib/time.ts'
+import type { ScheduleDay, Summary, WorkSession } from '../../types/api.ts'
 import './DashboardStats.css'
 
-export default function DashboardStats({ currentSession, todaySchedule, summary }) {
+type DashboardStatsProps = {
+  currentSession: WorkSession | undefined
+  todaySchedule: ScheduleDay | undefined
+  summary: Summary
+}
+
+export default function DashboardStats({ currentSession, todaySchedule, summary }: DashboardStatsProps) {
   const now = useNow()
   const workedSeconds = currentSession ? elapsedSeconds(currentSession.start_time, now) : 0
   const expectedTodaySeconds = (todaySchedule?.expected_minutes ?? 0) * 60

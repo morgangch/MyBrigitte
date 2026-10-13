@@ -1,8 +1,15 @@
-import { useId } from 'react'
+import { useId, type ComponentProps } from 'react'
 import './ui.css'
 
-// options : [{ value: "rh", label: "RH" }, ...]
-export default function Select({ label, options, ...props }) {
+type SelectOption = { value: string; label: string }
+
+// Toutes les props d'un <select> HTML + label et options
+type SelectProps = ComponentProps<'select'> & {
+  label: string
+  options: SelectOption[]
+}
+
+export default function Select({ label, options, ...props }: SelectProps) {
   const id = useId()
   return (
     <div className="field">

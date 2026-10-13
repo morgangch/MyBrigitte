@@ -1,13 +1,23 @@
-import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import Card from '../ui/Card.jsx'
-import { formatDuration } from '../../lib/time.js'
+import { Bar, BarChart, Rectangle, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type BarShapeProps } from 'recharts'
+import Card from '../ui/Card.tsx'
+import { formatDuration } from '../../lib/time.ts'
+import type { DailySummary } from '../../types/api.ts'
 import './WeekChart.css'
 
-const workedHours = (day) => (day.worked_minutes - day.overtime_minutes) / 60
-const overtimeHours = (day) => day.overtime_minutes / 60
-const formatWeekday = (date) => new Date(`${date}T12:00`).toLocaleDateString('fr-FR', { weekday: 'short' })
+const workedHours = (day: DailySummary) => (day.worked_minutes - day.overtime_minutes) / 60
+const overtimeHours = (day: DailySummary) => day.overtime_minutes / 60
+const formatWeekday = (date: string) => new Date(`${date}T12:00`).toLocaleDateString('fr-FR', { weekday: 'short' })
 
-export default function WeekChart({ days }) {
+type WeekChartProps = {
+  days: DailySummary[]
+}
+
+function WorkedBar(props: BarShapeProps) {
+  const day = props.payload as DailySummary
+  return <Rectangle {...props} radius={day.overtime_minutes > 0 ? 0 : [4, 4, 0, 0]} />
+}
+
+export default function WeekChart({ days }: WeekChartProps) {
   return (
     <Card
       title="Ma semaine"
@@ -36,14 +46,10 @@ export default function WeekChart({ days }) {
           />
           <Tooltip
             cursor={{ fill: 'var(--color-surface-alt)' }}
-            formatter={(value) => formatDuration(Math.round(value * 3600))}
+            formatter={(value) => formatDuration(Math.round(Number(value) * 3600))}
             wrapperClassName="chart-tooltip"
           />
-          <Bar dataKey={workedHours} name="Travaillé" stackId="day" fill="var(--color-primary)" barSize={120}>
-            {days.map((day) => (
-              <Cell key={day.date} radius={day.overtime_minutes > 0 ? 0 : [4, 4, 0, 0]} />
-            ))}
-          </Bar>
+          <Bar dataKey={workedHours} name="Travaillé" stackId="day" fill="var(--color-primary)" barSize={120} shape={WorkedBar} />
           <Bar
             dataKey={overtimeHours}
             name="Heures sup."

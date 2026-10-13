@@ -3,8 +3,12 @@ import './ui.css'
 // Nombre de couleurs définies dans styles/theme.css (--avatar-1 à --avatar-6)
 const AVATAR_COLOR_COUNT = 6
 
-// size : "small" | "medium" | "large"
-export default function Avatar({ name, size = 'medium' }) {
+type AvatarProps = {
+  name: string
+  size?: 'small' | 'medium' | 'large'
+}
+
+export default function Avatar({ name, size = 'medium' }: AvatarProps) {
   const initials = name
     .split(' ')
     .map((part) => part[0])

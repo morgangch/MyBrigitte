@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router'
-import Sidebar from './Sidebar.jsx'
+import Sidebar from './Sidebar.tsx'
 
 // Structure commune à toutes les pages connectées : la sidebar à gauche, la page à droite
 export default function AppLayout() {

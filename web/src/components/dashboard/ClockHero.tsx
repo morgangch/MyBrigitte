@@ -1,15 +1,21 @@
 import { Play, Square } from 'lucide-react'
-import Badge from '../ui/Badge.jsx'
-import Button from '../ui/Button.jsx'
-import useNow from '../../hooks/useNow.js'
-import { elapsedSeconds, formatTime, splitDuration } from '../../lib/time.js'
+import Badge from '../ui/Badge.tsx'
+import Button from '../ui/Button.tsx'
+import useNow from '../../hooks/useNow.ts'
+import { elapsedSeconds, formatTime, splitDuration } from '../../lib/time.ts'
+import type { WorkSession } from '../../types/api.ts'
 import './ClockHero.css'
 
-function pad(value) {
+function pad(value: number) {
   return value.toString().padStart(2, '0')
 }
 
-export default function ClockHero({ currentSession, onClock }) {
+type ClockHeroProps = {
+  currentSession: WorkSession | undefined
+  onClock: () => void
+}
+
+export default function ClockHero({ currentSession, onClock }: ClockHeroProps) {
   const now = useNow()
   const isClockedIn = currentSession !== undefined
   const { hours, minutes, seconds } = splitDuration(isClockedIn ? elapsedSeconds(currentSession.start_time, now) : 0)

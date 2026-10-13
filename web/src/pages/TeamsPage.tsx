@@ -1,5 +1,5 @@
-import Button from '../components/ui/Button.jsx'
-import PageLayout from '../layout/PageLayout.jsx'
+import Button from '../components/ui/Button.tsx'
+import PageLayout from '../layout/PageLayout.tsx'
 
 
 export default function TeamsPage() {

@@ -1,6 +1,6 @@
 import { ChartColumn, CircleUser, History, LayoutDashboard, UserCog, Users } from 'lucide-react'
 import { NavLink } from 'react-router'
-import Logo from '../components/ui/Logo.jsx'
+import Logo from '../components/ui/Logo.tsx'
 import './Sidebar.css'
 
 const MENU = {
