@@ -1,4 +1,4 @@
-use sea_orm_migration::{prelude::*, prelude::extension::postgres::Type, schema::*};
+use sea_orm_migration::{prelude::extension::postgres::Type, prelude::*, schema::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -23,10 +23,10 @@ impl MigrationTrait for Migration {
                     .col(pk_uuid(Users::Id).default(Expr::cust("gen_random_uuid()")))
                     .col(string_len(Users::FirstName, 100))
                     .col(string_len(Users::LastName, 100))
-                    .col(string_len(Users::Email, 254).check((
-                        "users_email_not_blank",
-                        Expr::cust("btrim(email) <> ''"),
-                    )))
+                    .col(
+                        string_len(Users::Email, 254)
+                            .check(("users_email_not_blank", Expr::cust("btrim(email) <> ''"))),
+                    )
                     .col(string_len_null(Users::PhoneNumber, 20))
                     .col(string_len_null(Users::PasswordHash, 255))
                     .col(enumeration(
