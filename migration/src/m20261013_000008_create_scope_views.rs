@@ -8,7 +8,9 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        // Self (depth 0) and every descendant team. Loops forever if teams contain a cycle.
+        // Self (depth 0) and every descendant team.
+        // CYCLE stops a corrupt loop. Any ancestor that reaches a cycle is omitted
+        // so v_manager_scope cannot grow. Writes must still reject cycles.
         db.execute_unprepared(
             "CREATE VIEW v_team_hierarchy AS
             WITH RECURSIVE hierarchy AS (
@@ -18,8 +20,13 @@ impl MigrationTrait for Migration {
                 SELECT h.ancestor_team_id, child.id, h.depth + 1
                 FROM hierarchy h
                 JOIN teams child ON child.parent_team_id = h.descendant_team_id
-            )
-            SELECT ancestor_team_id, descendant_team_id, depth FROM hierarchy",
+            ) CYCLE descendant_team_id SET is_cycle USING path
+            SELECT ancestor_team_id, descendant_team_id, depth
+            FROM hierarchy h
+            WHERE NOT h.is_cycle
+              AND h.ancestor_team_id NOT IN (
+                  SELECT c.ancestor_team_id FROM hierarchy c WHERE c.is_cycle
+              )",
         )
         .await?;
 

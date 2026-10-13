@@ -3,7 +3,8 @@
 -- These are ordinary views (live computation), NOT materialized views.
 
 -- v_team_hierarchy: self (depth 0) and every descendant team.
--- WARNING: requires cycle prevention for teams.parent_team_id.
+-- CYCLE stops a corrupt loop. Any ancestor that reaches a cycle is omitted
+-- so v_manager_scope cannot grow. Writes must still reject cycles.
 CREATE VIEW v_team_hierarchy AS
 WITH RECURSIVE hierarchy AS (
     SELECT id AS ancestor_team_id, id AS descendant_team_id, 0 AS depth
@@ -12,8 +13,13 @@ WITH RECURSIVE hierarchy AS (
     SELECT h.ancestor_team_id, child.id, h.depth + 1
     FROM hierarchy h
     JOIN teams child ON child.parent_team_id = h.descendant_team_id
-)
-SELECT ancestor_team_id, descendant_team_id, depth FROM hierarchy;
+) CYCLE descendant_team_id SET is_cycle USING path
+SELECT ancestor_team_id, descendant_team_id, depth
+FROM hierarchy h
+WHERE NOT h.is_cycle
+  AND h.ancestor_team_id NOT IN (
+      SELECT c.ancestor_team_id FROM hierarchy c WHERE c.is_cycle
+  );
 
 -- v_manager_scope: team members within manager's subtree, including self
 -- and manager peers. The VIEW grants NO write permissions by itself.
