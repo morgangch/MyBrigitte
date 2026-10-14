@@ -5,6 +5,20 @@ use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel
 use crate::entity::user::{self, Model, Role};
 use crate::error::ApiError;
 
+// Delete (Deactivate to not break the KPIs)
+pub async fn deactivate(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiError> {
+    let model = find_by_id(db, id).await?;
+    let mut active_model = model.into_active_model();
+
+    active_model.is_active = Set(false);
+    active_model.updated_at = Set(chrono::Utc::now().fixed_offset());
+
+    active_model
+        .update(db)
+        .await
+        .map_err(|_| ApiError::InternalError)
+}
+
 pub struct UpdateUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
