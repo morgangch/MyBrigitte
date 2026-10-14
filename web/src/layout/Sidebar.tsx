@@ -1,6 +1,8 @@
 import { ChartColumn, CircleUser, History, LayoutDashboard, UserCog, Users } from 'lucide-react'
 import { NavLink } from 'react-router'
-import Logo from '../components/ui/Logo.tsx'
+import { Avatar, Logo } from '../components/ui'
+import { ME } from '../lib/fakeData.ts'
+import { ROLE_LABELS } from '../lib/labels.ts'
 import './Sidebar.css'
 
 const MENU = {
@@ -19,7 +21,7 @@ const MENU = {
 export default function Sidebar() {
   return (
     <nav className="sidebar" aria-label="Navigation principale">
-      <NavLink to="/" end style={{ paddingBottom: '20px' }}>
+      <NavLink to="/" end className="sidebar-logo">
         <Logo variant="horizontalDark" />
       </NavLink>
       {Object.entries(MENU).map(([sectionTitle, items]) => (
@@ -42,6 +44,16 @@ export default function Sidebar() {
           </ul>
         </div>
       ))}
+      <NavLink to="/profile" className="sidebar-profile">
+        <Avatar name={`${ME.first_name} ${ME.last_name}`} />
+        <div className="sidebar-profile-text">
+          <p className="sidebar-profile-name">{`${ME.first_name} ${ME.last_name}`}</p>
+          <p className="sidebar-profile-role">
+            {ROLE_LABELS[ME.role]}
+            {ME.team && ` · ${ME.team.name}`}
+          </p>
+        </div>
+      </NavLink>
     </nav>
   )
 }

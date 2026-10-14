@@ -1,5 +1,5 @@
 import { Bar, BarChart, Rectangle, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type BarShapeProps } from 'recharts'
-import Card from '../ui/Card.tsx'
+import { Card } from '../ui'
 import { formatDuration } from '../../lib/time.ts'
 import type { DailySummary } from '../../types/api.ts'
 import './WeekChart.css'

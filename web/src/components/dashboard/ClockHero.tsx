@@ -1,6 +1,5 @@
 import { Play, Square } from 'lucide-react'
-import Badge from '../ui/Badge.tsx'
-import Button from '../ui/Button.tsx'
+import { Badge, Button } from '../ui'
 import useNow from '../../hooks/useNow.ts'
 import { elapsedSeconds, formatTime, splitDuration } from '../../lib/time.ts'
 import type { WorkSession } from '../../types/api.ts'
