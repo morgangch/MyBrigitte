@@ -3,18 +3,18 @@ use axum::{
     http::{header::AUTHORIZATION, request::Parts},
 };
 
-use crate::{auth::jwt::verify_token, config::Config, error::ApiError};
+use crate::{AppState, auth::jwt::verify_token, error::ApiError};
 
 pub struct AuthUser {
     pub user_id: String,
 }
 
-impl FromRequestParts<Config> for AuthUser {
+impl FromRequestParts<AppState> for AuthUser {
     type Rejection = ApiError;
 
     async fn from_request_parts(
         parts: &mut Parts,
-        config: &Config,
+        state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         let token = parts
             .headers
@@ -23,7 +23,7 @@ impl FromRequestParts<Config> for AuthUser {
             .and_then(|value| value.strip_prefix("Bearer "))
             .ok_or(ApiError::Unauthorized)?;
 
-        let claims = verify_token(token, &config.jwt_secret).ok_or(ApiError::Unauthorized)?;
+        let claims = verify_token(token, &state.jwt_secret).ok_or(ApiError::Unauthorized)?;
 
         Ok(AuthUser {
             user_id: claims.sub,
@@ -39,10 +39,9 @@ mod tests {
 
     const SECRET: &str = "secret-de-test-assez-long-pour-hs256-0123456789";
 
-    fn test_config() -> Config {
-        Config {
-            database_url: "postgresql://test".to_string(),
-            port: 0,
+    fn test_state() -> AppState {
+        AppState {
+            db: sea_orm::DatabaseConnection::default(),
             jwt_secret: SECRET.to_string(),
         }
     }
@@ -53,7 +52,7 @@ mod tests {
             builder = builder.header(AUTHORIZATION, value);
         }
         let (mut parts, _) = builder.body(()).unwrap().into_parts();
-        AuthUser::from_request_parts(&mut parts, &test_config()).await
+        AuthUser::from_request_parts(&mut parts, &test_state()).await
     }
 
     #[tokio::test]
