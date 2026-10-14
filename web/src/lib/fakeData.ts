@@ -1,5 +1,5 @@
 // TODO(clock-api) : fausses réponses de l'API, une constante par route, à remplacer par les vrais appels.
-import type { DailySummary, Me, ScheduleDay, Summary, WorkSession } from '../types/api.ts'
+import type { DailySummary, Me, ScheduleDay, Summary, Team, User, WorkSession } from '../types/api.ts'
 
 function _dayAt(daysAgo: number, hours: number, minutes: number) {
   const date = new Date()
@@ -62,4 +62,25 @@ export const MY_DAILY_SUMMARY: DailySummary[] = [
   { date: _dateOf(1), expected_minutes: 420, worked_minutes: 437, overtime_minutes: 17, late_minutes: 0, override_type: null },
   { date: _dateOf(0), expected_minutes: 420, worked_minutes: 0, overtime_minutes: 0, late_minutes: 0, override_type: null },
   { date: _dateOf(-1), expected_minutes: 0, worked_minutes: 0, overtime_minutes: 0, late_minutes: 0, override_type: 'rtt' },
+]
+
+// GET /teams
+export const TEAMS: Team[] = [
+  { id: 'team-1', name: 'Service client' },
+  { id: 'team-2', name: 'Opérations' },
+  { id: 'team-3', name: 'Finance' },
+  { id: 'team-4', name: 'IT' },
+  { id: 'team-5', name: 'RH' },
+]
+
+// GET /users
+export const USERS: User[] = [
+  { id: 'user-2', first_name: 'Hugo', last_name: 'Bernard', email: 'hugo.bernard@mybrigitte.fr', phone_number: '06 12 34 56 78', role: 'employee', team: TEAMS[0], today_status: 'present' },
+  { id: 'user-3', first_name: 'Inès', last_name: 'Moreau', email: 'ines.moreau@mybrigitte.fr', phone_number: '06 98 76 54 32', role: 'employee', team: TEAMS[0], today_status: 'late' },
+  { id: 'user-4', first_name: 'Karim', last_name: 'Haddad', email: 'karim.haddad@mybrigitte.fr', phone_number: '07 45 12 89 63', role: 'manager', team: TEAMS[1], today_status: 'present' },
+  { id: 'user-5', first_name: 'Chloé', last_name: 'Lefèvre', email: 'chloe.lefevre@mybrigitte.fr', phone_number: '06 22 41 07 15', role: 'employee', team: TEAMS[2], today_status: 'not_arrived' },
+  { id: 'user-6', first_name: 'Mathis', last_name: 'Dubois', email: 'mathis.dubois@mybrigitte.fr', phone_number: '06 31 77 20 48', role: 'employee', team: TEAMS[3], today_status: 'present' },
+  { id: 'user-7', first_name: 'Aïcha', last_name: 'Diallo', email: 'aicha.diallo@mybrigitte.fr', phone_number: '07 63 18 92 05', role: 'manager', team: TEAMS[4], today_status: 'present' },
+  { id: 'user-8', first_name: 'Lucas', last_name: 'Petit', email: 'lucas.petit@mybrigitte.fr', phone_number: null, role: 'employee', team: TEAMS[3], today_status: 'absent' },
+  { id: 'user-9', first_name: 'Emma', last_name: 'Garnier', email: 'emma.garnier@mybrigitte.fr', phone_number: '06 57 29 40 93', role: 'employee', team: null, today_status: 'present' },
 ]
