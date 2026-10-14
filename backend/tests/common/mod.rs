@@ -11,7 +11,11 @@ use tower::ServiceExt;
 /// and returns the response status with its JSON body.
 pub async fn get_json(uri: &str) -> (StatusCode, Value) {
     let request = Request::builder().uri(uri).body(Body::empty()).unwrap();
-    let response = create_app().oneshot(request).await.unwrap();
+    let response = create_app()
+        .with_state(backend::AppState::disconnect())
+        .oneshot(request)
+        .await
+        .unwrap();
 
     let status = response.status();
     let body = response.collect().await.unwrap().to_bytes();
