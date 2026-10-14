@@ -1,6 +1,0 @@
-import './ui.css'
-
-// tone : "neutral" | "success" | "warning" | "danger"
-export default function Badge({ tone = 'neutral', children }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>
-}
