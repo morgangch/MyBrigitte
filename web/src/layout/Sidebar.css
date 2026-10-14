@@ -12,8 +12,8 @@
   background-color: var(--color-background);
 }
 
-.sidebar > img {
-  margin: 4px 8px 18px;
+.sidebar-logo {
+  padding-bottom: 20px;
 }
 
 .menu-section {
@@ -66,4 +66,38 @@
 .menu-section a:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 10px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.sidebar-profile:hover .sidebar-profile-name {
+  color: var(--color-primary);
+}
+
+.sidebar-profile-text {
+  min-width: 0;
+}
+
+.sidebar-profile-name {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile-role {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
