@@ -4,23 +4,19 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header::AUTHORIZATION},
 };
-use backend::{config::Config, create_app};
+use backend::{AppState, create_app};
 use http_body_util::BodyExt;
 use serde_json::Value;
 use tower::ServiceExt;
 
 pub const TEST_SECRET: &str = "secret-de-test-assez-long-pour-hs256-0123456789";
 
-fn test_config() -> Config {
-    Config {
-        database_url: "postgresql://test".to_string(),
-        port: 0,
-        jwt_secret: TEST_SECRET.to_string(),
-    }
-}
-
 async fn send(request: Request<Body>) -> (StatusCode, Value) {
-    let response = create_app(test_config()).oneshot(request).await.unwrap();
+    let response = create_app()
+        .with_state(AppState::disconnect(TEST_SECRET.to_string()))
+        .oneshot(request)
+        .await
+        .unwrap();
     let status = response.status();
     let body = response.collect().await.unwrap().to_bytes();
     let json = serde_json::from_slice(&body).unwrap();

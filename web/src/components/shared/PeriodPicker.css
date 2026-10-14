@@ -1,0 +1,25 @@
+.period-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.period-arrow {
+  width: 40px;
+  padding: 0;
+}
+
+/* Largeur fixe : les flèches ne bougent pas quand le texte change de longueur ("5 oct." / "28 sept.") */
+.period-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

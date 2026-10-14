@@ -45,3 +45,24 @@ export function toDateKey(date: Date) {
   const day = date.getDate().toString().padStart(2, '0')
   return year + '-' + month + '-' + day
 }
+
+// Lundi de la semaine de `date`, à minuit (getDay() : 0 = dimanche, 1 = lundi…)
+export function startOfWeek(date: Date) {
+  const monday = new Date(date)
+  const daysSinceMonday = (monday.getDay() + 6) % 7
+  monday.setDate(monday.getDate() - daysSinceMonday)
+  monday.setHours(0, 0, 0, 0)
+  return monday
+}
+
+// `date` décalée de `days` jours (négatif pour reculer), sans modifier l'originale
+export function addDays(date: Date, days: number) {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+// 2026-10-12 -> "12 oct."
+export function formatShortDate(date: Date) {
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
