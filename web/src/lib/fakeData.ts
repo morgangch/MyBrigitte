@@ -19,6 +19,7 @@ export const ME: Me = {
   last_name: 'Martin',
   email: 'lea.martin@mybrigitte.fr',
   phone_number: null,
+  microsoft_email: 'lea.martin@mybrigitte.onmicrosoft.com',
   role: 'employee',
   team: { id: 'team-1', name: 'Service client' },
 }

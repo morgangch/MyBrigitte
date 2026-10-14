@@ -10,6 +10,7 @@ export type Me = {
   last_name: string
   email: string
   phone_number: string | null
+  microsoft_email: string | null
   role: Role
   team: { id: string; name: string } | null
 }
