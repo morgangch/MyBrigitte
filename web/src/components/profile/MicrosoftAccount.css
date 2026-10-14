@@ -1,0 +1,29 @@
+.microsoft-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+}
+
+.microsoft-account-logo {
+  width: 16px;
+  height: 16px;
+}
+
+.microsoft-account-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.microsoft-account-title {
+  font-weight: 500;
+}
+
+.microsoft-account-email {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
