@@ -52,3 +52,34 @@ export type DailySummary = {
   late_minutes: number
   override_type: OverrideType | null
 }
+
+export type TodayStatus = 'present' | 'late' | 'not_arrived' | 'absent'
+
+// GET /teams
+export type Team = {
+  id: string
+  name: string
+}
+
+// GET /users
+export type User = {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string | null
+  role: Role
+  team: Team | null
+  today_status: TodayStatus
+}
+
+// POST /users
+export type NewUser = {
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string | null
+  team_id: string | null
+  role: Role
+  weekly_minutes: number
+}
