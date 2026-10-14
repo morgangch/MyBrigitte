@@ -1,16 +1,14 @@
-import Logo from '../components/ui/Logo.tsx'
-import Input from '../components/ui/Input.tsx'
-import Button from '../components/ui/Button.tsx'
+import { Button, Input, Logo } from '../components/ui'
 import { Mail, Lock } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import microsoftLogo from '../assets/microsoft.svg'
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 
 export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const navigate = useNavigate()
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
     const formData = new FormData(event.currentTarget)

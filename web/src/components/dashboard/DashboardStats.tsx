@@ -1,6 +1,4 @@
-import Card from '../ui/Card.tsx'
-import ProgressBar from '../ui/ProgressBar.tsx'
-import Stat from '../ui/Stat.tsx'
+import { Card, ProgressBar, Stat } from '../ui'
 import useNow from '../../hooks/useNow.ts'
 import { elapsedSeconds, formatDuration } from '../../lib/time.ts'
 import type { ScheduleDay, Summary, WorkSession } from '../../types/api.ts'
