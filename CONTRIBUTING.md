@@ -54,7 +54,7 @@ Commit early and often; squash or tidy history before merging if appropriate.
 - Web and React Native clients: follow their ESLint and Prettier configuration and use TypeScript types where available.
 - Run the checks for the component you changed before pushing.
 
-Local hooks require Git, Bash, tar and Docker Compose v2 with a running Docker
+Local hooks require Git, Bash, tar, standard shell utilities and Docker Compose v2 with a running Docker
 engine. Rust, Bun, Python, cargo-audit and actionlint run in the dedicated checks
 image; they do not need to be installed on your machine. Enable the hooks once:
 
@@ -66,13 +66,26 @@ make check       # Complete local gate
 ```
 
 Hook installation changes only this clone's `core.hooksPath` and refuses to
-replace custom hooks. The pre-commit hook checks Rust formatting and client
-lint/format/types; pre-push adds audits, Clippy, complete workspace tests, client
-tests/builds, Python tests and actionlint. Both use `scripts/check-docker.sh`.
-The wrapper works from subdirectories and linked worktrees. It sends tracked and
-unignored working files through an archive, excluding `.env` files and Git
-metadata. The container has no repository bind mount or Docker socket and cannot
-change the host source or create root-owned node_modules there.
+replace custom hooks. Pre-commit selects components from the staged diff and
+checks the exact index snapshot, including partial commits. It checks Rust
+formatting and client lint/format/types. Pre-push selects components from each
+outgoing ref's diff against its remote commit and checks that outgoing commit;
+it adds audits, Clippy, complete workspace tests and client tests/builds for
+those components. Shared tooling changes select all components and also run
+Python tests and actionlint. Both hooks use the CI component classifier.
+Documentation-only diffs skip Docker entirely.
+
+New branches use their merge base with remote dev (or main). Tags and unavailable
+bases run all checks; deleted refs are skipped. Multiple outgoing refs are checked
+separately. Unstaged/untracked changes cannot interfere with these snapshots.
+Manual `make check-quick`, `make audit` and `make check` still check all components
+using tracked and unignored working files.
+
+The wrapper works from subdirectories and linked worktrees. Archives exclude
+`.env` files and Git metadata. The container has no repository bind mount or
+Docker socket and cannot change host source or create root-owned node_modules
+there. Temporary snapshots include the current checker so older outgoing commits
+can also be checked.
 
 The tools image rebuilds only when its definition changes. The
 `mybrigitte-checks_checks_cache` volume retains Cargo registry/build outputs,
@@ -89,7 +102,7 @@ CodeQL remain on main PRs, manual checks and releases. Workflow changes to dev
 retain Actions CodeQL. Shared/unknown source changes check all components;
 documentation-only changes retain audits and tooling validation. The Quality Gate
 rejects any missing/failed required job and only accepts skips selected by the
-plan. Full local pre-push checks remain enabled on every branch.
+plan. Local pre-push retains complete tests/builds for affected components on every branch.
 
 The following native commands are optional for contributors who already have the
 toolchains installed; CI uses pinned tools directly on its runners:

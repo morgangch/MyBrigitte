@@ -9,22 +9,41 @@ import subprocess
 import sys
 
 
+def classify_path(path):
+    if ("/" not in path and path.endswith(".md")) or path.startswith("docs/") or path == ".github/workflows/README.md":
+        return "docs"
+    if path.startswith(("backend/", "migration/", ".cargo/")) or path in ("Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "rust-toolchain"):
+        return "backend"
+    if path.startswith("web/"):
+        return "web"
+    if path.startswith("mobile/"):
+        return "mobile"
+    return "shared"
+
+
+def local_plan(paths):
+    selected = {key: False for key in ("backend", "web", "mobile", "scripts", "workflows")}
+    for path in paths:
+        kind = classify_path(path)
+        if kind == "shared":
+            return dict.fromkeys(selected, True)
+        if kind != "docs":
+            selected[kind] = True
+    return selected
+
+
 def plan(event_name, event, paths):
     full = not (event_name == "pull_request" and event.get("pull_request", {}).get("base", {}).get("ref") == "dev")
     selected = {"backend": full, "web": full, "mobile": full}
     scan_actions = full
     for path in paths:
-        if ("/" not in path and path.endswith(".md")) or path.startswith("docs/") or path == ".github/workflows/README.md":
+        kind = classify_path(path)
+        if kind == "docs":
             continue
-        if path.startswith(("backend/", "migration/", ".cargo/")) or path in ("Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "rust-toolchain"):
-            selected["backend"] = True
-        elif path.startswith("web/"):
-            selected["web"] = True
-        elif path.startswith("mobile/"):
-            selected["mobile"] = True
-        else:
-            # Shared tooling, Docker, workflow changes and unknown paths are conservative.
+        if kind == "shared":
             selected = dict.fromkeys(selected, True)
+        else:
+            selected[kind] = True
         if path.startswith(".github/workflows/"):
             scan_actions = True
     return {key: str(value).lower() for key, value in {"full": full, **selected, "scan_actions": scan_actions}.items()}

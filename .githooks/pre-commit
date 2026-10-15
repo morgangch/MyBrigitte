@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
 project_root=$(git rev-parse --show-toplevel)
+index_file=$(git rev-parse --path-format=absolute --git-path index)
 # Git exports repository variables; child checks may create temporary test repos.
 # shellcheck disable=SC2046
 unset $(git rev-parse --local-env-vars)
-exec bash "$project_root/scripts/check-docker.sh" quick
+export CHECKS_INDEX_FILE="$index_file"
+exec bash "$project_root/scripts/check-docker.sh" quick --staged

@@ -118,7 +118,14 @@ shell quoting is corrected without changing its target or credentials.
 
 ## Local checks
 
-From the [repository root](../../), Docker runs the same gates as the hooks:
+Hooks use the CI component classifier: pre-commit checks the staged index,
+pre-push checks each outgoing commit against its remote ref. Shared changes,
+tags and unknown bases check everything; documentation-only diffs skip Docker.
+New branches compare against the merge base with remote dev or main. Hooks
+ignore unrelated working changes and audit only affected components on push.
+
+From the [repository root](../../), manual Docker commands check all components
+using the working tree:
 
 ```bash
 make check-quick

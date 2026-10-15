@@ -9,4 +9,6 @@ for client in web mobile; do
         ln -s "/cache/$client/dist" "/workspace/$client/dist"
     fi
 done
-exec python3 /workspace/scripts/check.py "$@"
+runner=/workspace/scripts/check.py
+if [ -f /workspace/.checks-runner/check.py ]; then runner=/workspace/.checks-runner/check.py; fi
+exec python3 "$runner" "$@"
