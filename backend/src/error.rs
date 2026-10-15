@@ -10,6 +10,7 @@ pub enum ApiError {
     NotFound,
     InternalError,
     Unauthorized,
+    Conflict,
 }
 
 impl IntoResponse for ApiError {
@@ -21,6 +22,7 @@ impl IntoResponse for ApiError {
                 "Internal server error".to_string(),
             ),
             ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized".to_string()),
+            ApiError::Conflict => (StatusCode::CONFLICT, "Email already taken".to_string()),
         };
 
         let body = Json(json!({
@@ -41,6 +43,7 @@ mod tests {
             (ApiError::NotFound, StatusCode::NOT_FOUND),
             (ApiError::InternalError, StatusCode::INTERNAL_SERVER_ERROR),
             (ApiError::Unauthorized, StatusCode::UNAUTHORIZED),
+            (ApiError::Conflict, StatusCode::CONFLICT),
         ];
 
         for (error, expected_status) in test_cases {
