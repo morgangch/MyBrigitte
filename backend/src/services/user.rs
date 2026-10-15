@@ -19,6 +19,19 @@ pub async fn deactivate(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
         .map_err(|_| ApiError::InternalError)
 }
 
+pub async fn delete(db: &DatabaseConnection, id: Uuid) -> Result<(), ApiError> {
+    let result = user::Entity::delete_by_id(id)
+        .exec(db)
+        .await
+        .map_err(|_| ApiError::NotFound)?;
+
+    if result.rows_affected == 0 {
+        return Err(ApiError::NotFound);
+    }
+
+    Ok(())
+}
+
 pub struct UpdateUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
@@ -96,7 +109,10 @@ pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model,
     active_model
         .insert(db)
         .await
-        .map_err(|_| ApiError::InternalError)
+        .map_err(|error| match error.sql_err() {
+            Some(sea_orm::SqlErr::UniqueConstraintViolation(_)) => ApiError::Conflict,
+            _ => ApiError::InternalError,
+        })
 }
 
 // Read
