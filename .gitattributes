@@ -1,0 +1,4 @@
+# Shell scripts run under Git Bash and in Linux containers, including on Windows.
+*.sh text eol=lf
+# Git hooks have no .sh extension; their shebangs also require LF.
+.githooks/* text eol=lf
