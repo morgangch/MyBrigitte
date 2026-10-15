@@ -1,18 +1,18 @@
 import { RotateCcw, Search } from 'lucide-react'
 import { Button, Input, Select } from '../ui'
 import { TEAMS } from '../../lib/fakeData.ts'
-import { TODAY_STATUS_LABELS } from '../../lib/labels.ts'
+import { PRESENCE_STATUS_LABELS } from '../../lib/labels.ts'
 import { EMPTY_FILTERS, hasActiveFilters, type UserFilters } from '../../lib/userFilters.ts'
 import './UsersFilters.css'
 
 const TEAM_OPTIONS = [
   { value: '', label: 'Toutes les équipes' },
-  ...TEAMS.map((team) => ({ value: team.id, label: team.name })),
+  ...TEAMS.items.map((team) => ({ value: team.id, label: team.name })),
 ]
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Tous les états' },
-  ...Object.entries(TODAY_STATUS_LABELS).map(([value, label]) => ({ value, label })),
+  ...Object.entries(PRESENCE_STATUS_LABELS).map(([value, label]) => ({ value, label })),
 ]
 
 type UsersFiltersProps = {

@@ -1,4 +1,4 @@
-import type { User } from '../types/api.ts'
+import type { PresenceStatus, User } from '../types/api.ts'
 
 export type UserFilters = {
   search: string
@@ -17,11 +17,11 @@ function matchesSearch(user: User, search: string) {
   return text.includes(search.trim().toLowerCase())
 }
 
-export function filterUsers(users: User[], filters: UserFilters) {
+export function filterUsers(users: User[], filters: UserFilters, presenceByUser: Map<string, PresenceStatus>) {
   return users.filter(
     (user) =>
       matchesSearch(user, filters.search) &&
       (filters.teamId === '' || user.team?.id === filters.teamId) &&
-      (filters.status === '' || user.today_status === filters.status),
+      (filters.status === '' || presenceByUser.get(user.id) === filters.status),
   )
 }
