@@ -110,3 +110,23 @@ bun run --if-present build
 
 See [the project README](../../README.md), [contribution guidelines](../../CONTRIBUTING.md),
 and [Microsoft configuration names](../../backend/.env.example).
+
+## Registry deployment helper
+
+Download `release-images.json` from a matching release, configure environment
+secrets/GHCR read access, then run:
+
+```bash
+python3 scripts/deploy-registry.py prod .env release-images.json
+python3 scripts/deploy-registry.py dev .env.dev release-images.json
+```
+
+The helper validates the channel and digest-pinned image references, rejects
+placeholder hosted secrets, serializes deployments on the server, pulls images,
+runs migrations and starts Compose with `--no-build --wait`. Development hosting
+uses a separate `mybrigitte-dev-hosted` project, runtime images and no fixture seed.
+DB volumes are preserved. No SSH target or remote deployment workflow is enabled.
+A previous image manifest can be used for application rollback only when the
+schema remains compatible; this does not replace backups or reverse migrations.
+Tests cover channel separation, missing/duplicate services, image origins and
+invalid digests. Run `python3 -m unittest discover -s scripts -p 'test_*.py'`.
