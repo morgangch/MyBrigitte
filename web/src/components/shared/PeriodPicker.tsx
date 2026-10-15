@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import Button from '../ui/Button.tsx'
+import { Button } from '../ui'
 import { addDays, formatShortDate } from '../../lib/time.ts'
 import './PeriodPicker.css'
 
