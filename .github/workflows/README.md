@@ -25,15 +25,40 @@ exists. Once initialized, bun ci requires a committed bun.lock. Available
 scripts must fail on errors, and test scripts must run once and exit. Missing
 scripts are skipped; no client checks are claimed for unimplemented clients.
 Strict validation requires both clients to be initialized. The quality gate requires
-all component workflows to succeed, including build and test workflows.
+every job required by the selected profile to succeed; only planned skips pass.
 
 Branch pushes do not trigger standalone checks. Opening or updating a pull request
-triggers all checks, including pull requests from dev to main. Manual runs remain
+selects the checks for its target branch, including full checks from dev to main. Manual runs remain
 available through all_checks.yml, release.yml, and mirror.yml; component workflows
 run through all_checks.yml. A manual mirror run does not run checks first.
 To enforce the PR gate, configure branch protection or a ruleset to require pull
 requests and the Quality Gate Decision status check before merging into main
 (and dev if desired). Workflow configuration alone does not prevent merging.
+
+## Check profiles and caching
+
+| Event | Component checks | Security | Coverage / production builds |
+| --- | --- | --- | --- |
+| PR targeting dev | Changed components: lint/types and unit tests | RustSec + Bun; Actions CodeQL when workflows change | Skipped |
+| PR targeting main (or other branches) | All workspace/client tests including integration and doc tests | Full CodeQL + audits | Enabled |
+| Manual checks / release workflow calls | Full checks regardless of branch/tag | Full CodeQL + audits | Enabled |
+
+`scripts/ci-plan.py` computes the profile and validates Quality Gate Decision.
+Dev PR file selection uses a two-commit checkout and the event's base SHA. Shared
+files, unknown paths or a failed diff select all components. Markdown at the
+repository root and docs changes do not compile components. Validation always
+runs actionlint and the Python tests; dependency audits always run. A skipped,
+failed or cancelled required job cannot produce a green gate.
+
+Rust 1.99.0 keeps cache keys stable and matches the Docker toolchain. Rust caches
+include workspace artifacts and remain separate for build/tests, Clippy and LLVM
+coverage. The new prefix starts caches that retain workspace artifacts. Cargo
+fingerprints invalidate changed source; Cargo.lock/compiler versions contribute
+to the keys. Cargo test already builds its targets, so an extra cargo build runs
+only when tests are explicitly disabled. Bun's existing download caches remain
+keyed by OS, runtime and lockfile. Advisory databases are refreshed on every audit.
+A new test runner would add installation overhead here; the current tests take
+about a second once compiled, so reducing compilation/scanning work matters more.
 
 ## GHCR release channels
 
@@ -90,7 +115,15 @@ shell quoting is corrected without changing its target or credentials.
 
 ## Local checks
 
-From the [repository root](../../):
+From the [repository root](../../), Docker runs the same gates as the hooks:
+
+```bash
+make check-quick
+make audit
+make check
+```
+
+Optional native equivalents for an already installed toolchain:
 
 ```bash
 cargo fmt --all --check
