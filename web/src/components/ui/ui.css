@@ -20,6 +20,11 @@
   height: 16px;
 }
 
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button-primary {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -123,6 +128,7 @@ select.input {
 }
 
 .badge-neutral { background: var(--color-surface-alt); color: var(--color-text-secondary); }
+.badge-primary { background: var(--color-primary-soft); color: var(--color-primary); }
 .badge-success { background: var(--color-success-soft); color: var(--color-success); }
 .badge-warning { background: var(--color-warning-soft); color: var(--color-warning); }
 .badge-danger { background: var(--color-danger-soft); color: var(--color-danger); }
@@ -135,7 +141,6 @@ select.input {
   background: var(--color-primary-soft);
   color: var(--color-primary);
   font-weight: 600;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .card {

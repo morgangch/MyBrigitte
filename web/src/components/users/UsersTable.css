@@ -1,0 +1,6 @@
+.users-table-count {
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}

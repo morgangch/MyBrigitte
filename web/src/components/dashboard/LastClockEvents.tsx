@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
-import Card from '../ui/Card.tsx'
+import { Card } from '../ui'
 import { formatDay, formatTime } from '../../lib/time.ts'
 import type { WorkSession } from '../../types/api.ts'
 import './LastClockEvents.css'

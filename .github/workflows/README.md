@@ -1,10 +1,9 @@
 # MyBrigitte workflows
 
 The repository keeps a Rust workspace at its root, with an Axum backend in
-[backend/](../../backend/). SeaORM is the planned persistence layer and Microsoft
-is the OAuth provider; neither persistence nor authentication is implemented yet.
-The [web/](../../web/) and [mobile/](../../mobile/) directories are placeholders;
-the mobile client will use React Native.
+[backend/](../../backend/). SeaORM connects to PostgreSQL at startup. Microsoft OAuth is planned.
+The [web/](../../web/) client uses React/Vite and demonstration data;
+[mobile/](../../mobile/) is reserved for React Native.
 
 ## Workflow files
 
@@ -18,7 +17,7 @@ the mobile client will use React Native.
 | [web_build_test.yml](web_build_test.yml) | Runs available test and build scripts. |
 | [mobile_code_quality.yml](mobile_code_quality.yml) | Runs available React Native lint, format:check, and typecheck scripts. |
 | [mobile_build_test.yml](mobile_build_test.yml) | Runs available test and build scripts; builds a debug APK when the Android Gradle wrapper exists. |
-| [release.yml](release.yml) | Checks, packages backend and web, publishes GHCR images, and creates GitHub Releases on version tags; supports manual development or production builds. |
+| [release.yml](release.yml) | Verifies tag ancestry, publishes channel-specific runtime images to GHCR, and creates digest-based GitHub Releases. |
 | [mirror.yml](mirror.yml) | Mirrors the repository after a successful release build or on manual runs, using MIRROR_URL and SSH_PRIVATE_KEY. |
 
 Client workflows report placeholders and skip client commands until a package.json
@@ -36,21 +35,44 @@ To enforce the PR gate, configure branch protection or a ruleset to require pull
 requests and the Quality Gate Decision status check before merging into main
 (and dev if desired). Workflow configuration alone does not prevent merging.
 
-The release workflow packages the backend binary in a tar.gz archive (preserving
-executable permissions) and the web dist directory in web-dist.tar.gz. Version
-tags beginning with v create a GitHub Release with these assets and generated
-release notes. Any Android debug APK produced by the checks is also attached and
-identified as a development build requiring Metro. Native iOS builds and signed
-Android releases require additional setup.
+## GHCR release channels
 
-Docker images for backend and web are published to ghcr.io/<owner>/<repo>/<service>.
-Images receive the Git tag, semver tags when applicable, and a commit SHA tag.
-Stable production builds update latest; development builds update latest-dev.
-Manual runs retain release_type and skip_docker options, and test the Compose
-stack before publishing images unless skip_docker is enabled. Manual runs on
-branches do not create GitHub Releases. The mirror runs after successful packaging
-and publication (allowing explicitly skipped Docker or release jobs). No remote
-service deployment is performed.
+Git tags have no branch of their own. The tag convention selects a channel and
+`scripts/release-channel.py` verifies that the tagged commit belongs to its
+expected remote branch before checks or publication:
+
+| Trigger | Required ancestry | Published runtime images |
+| --- | --- | --- |
+| `v1.2.3` / `v1.2.3-rc.1` | `origin/main` | `backend`, `web`, `proxy` |
+| `dev-v1.2.3` | `origin/dev` | `backend-dev`, `web-dev`, `proxy-dev` |
+| Manual run on main/dev | Selected branch | Matching channel, version `sha-<commit>` |
+
+Feature-branch tags, wrong-channel commits and malformed versions are rejected.
+A commit present on both branches is disambiguated by the prefix. All packages
+live below `ghcr.io/<owner>/<repo>/`; tags include the requested version and full
+commit SHA. Stable prod and dev packages each receive their own `latest` alias;
+production release candidates do not advance `latest`.
+
+Hosted dev images are optimized runtime images built from dev code, not the
+local Vite/Cargo hot-reload images. Both channels pass the full checks and Docker
+smoke test before the three image builds are pushed. There is no skip-publication
+path that can produce a successful release with missing images.
+
+GitHub Releases on tags contain `release-images.json`, with the three published
+GHCR digests and deployment commands; binary/frontend tarballs are no longer the
+release output. BuildKit also publishes provenance and SBOM attestations. The
+mirror runs after a successful tagged release. Manual publication creates images
+but no GitHub Release or mirror push.
+
+Deploy published digests by setting `BACKEND_IMAGE`, `WEB_IMAGE` and
+`PROXY_IMAGE` in the environment-specific env file and running `pull`, then
+`up -d --no-build --wait` with the same project. PostgreSQL data is preserved.
+Configure GHCR read access for private packages on the target. No automatic SSH
+server deployment is configured. Watchtower remains absent; migrations and
+rollback must be coordinated before enabling automatic container replacement.
+
+Security scans, coverage reports and deployment tooling are separate work in
+`cicd/security-coverage`, not part of this Docker/release branch.
 
 ## Local checks
 

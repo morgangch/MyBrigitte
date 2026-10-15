@@ -1,0 +1,25 @@
+.toast {
+  inset: auto 24px 24px auto;
+  margin: 0;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--radius-small);
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.toast:popover-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-success {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.toast-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
