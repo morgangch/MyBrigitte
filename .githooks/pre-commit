@@ -4,4 +4,4 @@ project_root=$(git rev-parse --show-toplevel)
 # Git exports repository variables; child checks may create temporary test repos.
 # shellcheck disable=SC2046
 unset $(git rev-parse --local-env-vars)
-exec python3 "$project_root/scripts/check.py" quick
+exec bash "$project_root/scripts/check-docker.sh" quick

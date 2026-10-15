@@ -4,4 +4,4 @@ project_root=$(git rev-parse --show-toplevel)
 # Prevent Git's hook environment from redirecting temporary test repositories.
 # shellcheck disable=SC2046
 unset $(git rev-parse --local-env-vars)
-exec python3 "$project_root/scripts/check.py" full
+exec bash "$project_root/scripts/check-docker.sh" full

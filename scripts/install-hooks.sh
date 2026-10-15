@@ -14,4 +14,4 @@ for hook in pre-commit pre-push; do
     fi
 done
 git config --local core.hooksPath .githooks
-echo 'Hooks enabled locally: pre-commit (quick), pre-push (full checks + audits).'
+echo 'Docker hooks enabled locally: pre-commit (quick), pre-push (full checks + audits).'

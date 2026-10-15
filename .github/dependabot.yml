@@ -31,6 +31,7 @@ updates:
       - /web
       - /proxy
       - /dev/seed
+      - /dev/checks
     schedule:
       interval: weekly
     groups:
