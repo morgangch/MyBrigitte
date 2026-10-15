@@ -35,6 +35,10 @@ jobs:
   checks:
     needs: [release_config]
     uses: ./.github/workflows/all_checks.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
   test_docker_compose:
     needs: [checks]

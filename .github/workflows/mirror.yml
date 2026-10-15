@@ -31,13 +31,17 @@ jobs:
 
       - name: Report mirroring status
         if: always()
+        env:
+          MIRROR_STATUS: ${{ job.status }}
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "## ✅ Repository Mirrored Successfully" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Repository has been successfully mirrored to the target." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## ❌ Mirroring Failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Failed to mirror repository. Check the logs for details." >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            if [ "$MIRROR_STATUS" = success ]; then
+              echo '## Repository mirrored successfully'
+              echo
+              echo 'Repository mirrored to the configured target.'
+            else
+              echo '## Mirroring failed'
+              echo
+              echo 'Check the mirroring job logs for details.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -71,8 +71,20 @@ Configure GHCR read access for private packages on the target. No automatic SSH
 server deployment is configured. Watchtower remains absent; migrations and
 rollback must be coordinated before enabling automatic container replacement.
 
-Security scans, coverage reports and deployment tooling are separate work in
-`cicd/security-coverage`, not part of this Docker/release branch.
+## Additional CI security and coverage
+
+This branch adds `security.yml`: RustSec Cargo dependency audit, Bun high/critical
+advisory audit and CodeQL security-extended reports for Rust, TS/JS and Actions.
+Dependency findings fail CI; CodeQL findings need repository code-scanning merge
+rules to enforce severity thresholds. Dependabot checks Cargo, Bun, Docker and
+GitHub Actions weekly. Security results join Quality Gate Decision.
+
+`coverage.yml` runs backend tests under LLVM instrumentation and uploads LCOV,
+HTML and a percentage summary. Coverage joins the quality gate but has no arbitrary
+percentage threshold while business endpoints remain under construction. The
+additional jobs require a real GitHub run; local YAML validation is not a remote
+success certificate. Accessibility/browser CI is still pending. Mirroring summary
+shell quoting is corrected without changing its target or credentials.
 
 ## Local checks
 

@@ -55,10 +55,20 @@ jobs:
     uses: ./.github/workflows/mobile_build_test.yml
     with:
       enable_tests: ${{ !inputs.skip_tests }}
+  security:
+    needs: [repository_validation]
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+  coverage:
+    needs: [repository_validation]
+    uses: ./.github/workflows/coverage.yml
   quality_gate:
     name: Quality Gate Decision
     if: always()
-    needs: [repository_validation, backend_code_quality, backend_build_test, web_code_quality, web_build_test, mobile_code_quality, mobile_build_test]
+    needs: [repository_validation, backend_code_quality, backend_build_test, web_code_quality, web_build_test, mobile_code_quality, mobile_build_test, security, coverage]
     runs-on: ubuntu-latest
     steps:
       - name: Require all checks to pass
