@@ -54,7 +54,7 @@ Commit early and often; squash or tidy history before merging if appropriate.
 - Web and React Native clients: follow their ESLint and Prettier configuration and use TypeScript types where available.
 - Run the checks for the component you changed before pushing.
 
-Install Python 3, Rust (including rustfmt and Clippy), and Bun 1.4.2. Then, from
+Install Python 3, Rust (including rustfmt and Clippy), and Bun 1.4.3. Then, from
 the repository root, install the audit tool and enable the versioned Git hooks:
 
 ```bash

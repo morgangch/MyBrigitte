@@ -77,7 +77,9 @@ This branch adds `security.yml`: RustSec Cargo dependency audit, Bun high/critic
 advisory audit and CodeQL security-extended reports for Rust, TS/JS and Actions.
 Dependency findings fail CI; CodeQL findings need repository code-scanning merge
 rules to enforce severity thresholds. Dependabot checks Cargo, Bun, Docker and
-GitHub Actions weekly. Security results join Quality Gate Decision.
+GitHub Actions weekly, grouping version updates by ecosystem and targeting `dev`.
+GitHub reads its configuration from the default branch, so promote the config to
+`main` to activate this policy. Security results join Quality Gate Decision.
 
 `coverage.yml` runs backend tests under LLVM instrumentation and uploads LCOV,
 HTML and a percentage summary. Coverage joins the quality gate but has no arbitrary
