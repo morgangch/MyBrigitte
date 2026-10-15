@@ -54,6 +54,34 @@ Commit early and often; squash or tidy history before merging if appropriate.
 - Web and React Native clients: follow their ESLint and Prettier configuration and use TypeScript types where available.
 - Run the checks for the component you changed before pushing.
 
+Install Python 3, Rust (including rustfmt and Clippy), and Bun 1.4.2. Then, from
+the repository root, install the audit tool and enable the versioned Git hooks:
+
+```bash
+cargo install --locked cargo-audit
+make hooks
+```
+
+Hook installation changes only this clone's `core.hooksPath` and refuses to
+overwrite existing custom hooks. Every clone needs this setup once.
+The pre-commit hook checks Rust formatting and client lint/format/types. The
+pre-push hook additionally runs RustSec and Bun dependency audits, Clippy,
+workspace tests, client tests/builds and Python script tests. If installed,
+`actionlint` also validates the workflows. CodeQL still runs on GitHub.
+
+Run these same gates manually from the root with `make check-quick`, `make audit`
+or `make check`. The Python entry point also works from another directory:
+`python3 /path/to/MyBrigitte/scripts/check.py audit`. Independent checks run in
+parallel, while Cargo compilation commands remain sequential. Existing Cargo and
+Bun caches are reused; client installation uses `bun ci` and never updates the
+lockfile. Uninitialized clients are skipped. Checks do not read `.env` files or
+start Docker/PostgreSQL; backend tests run without a live database.
+
+Audits require network access and block pushes on RustSec vulnerabilities or
+high/critical frontend advisories; a failed audit is never silently skipped.
+Git hooks check the working tree, so run them with the intended changes present.
+They supplement the required CI checks and do not enforce repository protection.
+
 Backend checks (from the repository root):
 
 ```bash
