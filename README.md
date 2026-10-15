@@ -91,10 +91,12 @@ references and passes the resulting URL to the backend and migration job.
 `PORT` controls the backend listener, healthcheck and proxy upstream; `WEB_PORT`
 controls the public proxy port. Docker uses `POSTGRES_HOST=postgres`, while the
 host Rust example uses `POSTGRES_HOST=localhost`.
-An explicit alternate production env remains supported:
+There are two runtime env files: `.env` for production and `.env.dev` for local
+development. Their tracked templates are `.env.example` and `.env.dev.example`.
+The optional explicit production Compose override uses the same root `.env`:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
 ```
 
 Open http://localhost. For deployment, set `BACKEND_IMAGE`, `WEB_IMAGE` and `PROXY_IMAGE`
