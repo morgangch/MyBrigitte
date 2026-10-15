@@ -1,19 +1,49 @@
-
 export type Role = 'employee' | 'manager'
 
-export type OverrideType = 'paid_leave' | 'rtt' | 'day_off' | 'custom_hours'
+export type WorkPolicyMode = 'fixed' | 'flexible'
 
-// GET /me
-export type Me = {
+export type PresenceStatus = 'present' | 'late' | 'away' | 'not_arrived' | 'absent' | 'day_off'
+
+export type Page<T> = {
+  items: T[]
+  total: number
+}
+
+export type TeamRef = {
+  id: string
+  name: string
+}
+
+export type UserRef = {
+  id: string
+  first_name: string
+  last_name: string
+}
+
+// GET /users, GET /users/{id}
+export type User = {
   id: string
   first_name: string
   last_name: string
   email: string
   phone_number: string | null
-  microsoft_email: string | null
-  has_password: boolean
   role: Role
-  team: Team | null
+  team: TeamRef | null
+  is_active: boolean
+  created_at: string
+}
+
+// GET /me
+export type Me = User & {
+  has_password: boolean
+}
+
+// GET /presence
+export type Presence = {
+  user: UserRef
+  team: TeamRef | null
+  status: PresenceStatus
+  first_clock_in: string | null
 }
 
 // GET /me/work-sessions : end_time à null = session en cours
@@ -23,60 +53,33 @@ export type WorkSession = {
   end_time: string | null
 }
 
-// GET /me/schedule : ce qui est prévu un jour donné
+// GET /me/schedule
 export type ScheduleDay = {
   date: string
   start_time: string | null
   end_time: string | null
-  break_minutes: number | null
+  break_minutes: number
   expected_minutes: number
-  override_type: OverrideType | null
 }
 
-// GET /me/summary
-export type Summary = {
-  from: string
-  to: string
-  worked_minutes: number
-  expected_minutes: number
-  overtime_minutes: number
-  worked_days: number
-  late_days: number
+// GET /me/work-policy
+export type WorkPolicy = {
+  id: string
+  mode: WorkPolicyMode
+  expected_minutes_per_week: number | null
+  default_break_minutes: number
   late_tolerance_minutes: number
+  effective_from: string
+  effective_until: string | null
+  weekly_schedule: {
+    day_of_week: number
+    start_time: string | null
+    end_time: string | null
+    expected_break_minutes: number
+  }[]
 }
 
-// GET /me/summary?group_by=day
-export type DailySummary = {
-  date: string
-  expected_minutes: number
-  worked_minutes: number
-  overtime_minutes: number
-  late_minutes: number
-  override_type: OverrideType | null
-}
-
-export type TodayStatus = 'present' | 'late' | 'not_arrived' | 'absent'
-
-// GET /teams
-export type Team = {
-  id: string
-  name: string
-}
-
-// GET /users
-export type User = {
-  id: string
-  first_name: string
-  last_name: string
-  email: string
-  phone_number: string | null
-  role: Role
-  team: Team | null
-  today_status: TodayStatus
-}
-
-export type WorkPolicyMode = 'fixed' | 'flexible'
-
+// POST /users/{id}/work-policies (et dans POST /users)
 export type NewWorkPolicy = {
   mode: WorkPolicyMode
   expected_minutes_per_week: number | null
@@ -93,7 +96,53 @@ export type NewUser = {
   last_name: string
   email: string
   phone_number: string | null
-  team_id: string | null
+  team_id: string
   role: Role
   work_policy: NewWorkPolicy
+}
+
+// GET /…/stats
+export type Stats = {
+  worked_minutes: number
+  expected_minutes: number
+  overtime_minutes: number
+  late_minutes: number
+  expected_days: number
+  worked_days: number
+  late_days: number
+  absent_days: number
+  average_weekly_minutes: number | null
+  punctuality_rate: number | null
+  presence_rate: number | null
+}
+
+// GET /…/stats?group_by=day
+export type DayStats = {
+  date: string
+  stats: Stats
+}
+
+// GET /stats?group_by=team
+export type TeamStats = {
+  team: TeamRef
+  stats: Stats
+}
+
+// GET /teams, GET /teams/{id}
+export type Team = {
+  id: string
+  name: string
+  description: string | null
+  parent: TeamRef | null
+  managers: UserRef[]
+  member_count: number
+  member_preview: UserRef[]
+}
+
+// POST /teams
+export type NewTeam = {
+  name: string
+  description: string | null
+  parent_team_id: string
+  member_ids: string[]
 }
