@@ -1,0 +1,21 @@
+.users-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) repeat(2, minmax(0, 200px)) 1fr;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.users-filters-reset {
+  justify-self: end;
+}
+
+@media (max-width: 600px) {
+  .users-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .users-filters-reset {
+    justify-self: start;
+  }
+}

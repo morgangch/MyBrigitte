@@ -1,0 +1,30 @@
+.add-user-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.add-user-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.add-user-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.add-user-section > legend {
+  width: 100%;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-large);
+  font-weight: 600;
+}

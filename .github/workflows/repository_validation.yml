@@ -15,8 +15,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
       - name: Validate workspace and project structure
         run: |
           for file in Cargo.toml Cargo.lock backend/Cargo.toml backend/src/main.rs README.md CONTRIBUTING.md CODE_OF_CONDUCT.md backend/.env.example; do

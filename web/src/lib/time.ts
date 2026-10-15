@@ -66,3 +66,8 @@ export function addDays(date: Date, days: number) {
 export function formatShortDate(date: Date) {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
+
+export function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}

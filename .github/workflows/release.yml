@@ -1,113 +1,55 @@
-name: Release Build & Deployment
+name: Publish GHCR Release
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*', 'dev-v*']
   workflow_dispatch:
-    inputs:
-      release_type:
-        description: Type of release
-        type: choice
-        options: [development, production]
-        default: development
-      skip_docker:
-        description: Skip Docker image builds and Compose test
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
-jobs:
-  checks:
-    uses: ./.github/workflows/all_checks.yml
+concurrency:
+  group: ghcr-${{ startsWith(github.ref_name, 'dev-') && 'dev' || github.ref_name == 'dev' && 'dev' || 'prod' }}
+  cancel-in-progress: false
 
+jobs:
   release_config:
     runs-on: ubuntu-24.04
     outputs:
-      release_type: ${{ steps.config.outputs.release_type }}
+      channel: ${{ steps.config.outputs.channel }}
+      environment: ${{ steps.config.outputs.environment }}
+      image_suffix: ${{ steps.config.outputs.image_suffix }}
       registry: ${{ steps.config.outputs.registry }}
-      mobile_ready: ${{ steps.config.outputs.mobile_ready }}
+      version: ${{ steps.config.outputs.version }}
       prerelease: ${{ steps.config.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v6
-      - id: config
-        env:
-          REQUESTED_TYPE: ${{ inputs.release_type }}
-        run: |
-          release_type="${REQUESTED_TYPE:-production}"
-          echo "release_type=$release_type" >> "$GITHUB_OUTPUT"
-          echo "registry=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-          echo "mobile_ready=$(test -f mobile/package.json && test -f mobile/android/gradlew && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          if [[ "$GITHUB_REF_NAME" == *-rc* || "$GITHUB_REF_NAME" == *-beta* || "$GITHUB_REF_NAME" == *-alpha* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Verify tag ancestry and select channel
+        id: config
+        run: python3 scripts/release-channel.py
+      - name: Verify release classification tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
 
-  backend:
-    needs: [checks, release_config]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo build -p backend --release --locked
-      - name: Package backend binary
-        run: tar -czf mybrigitte-backend-linux-x86_64.tar.gz -C target/release backend
-      - uses: actions/upload-artifact@v7
-        with:
-          name: mybrigitte-backend-linux-x86_64
-          path: mybrigitte-backend-linux-x86_64.tar.gz
-          if-no-files-found: error
-          retention-days: ${{ needs.release_config.outputs.release_type == 'production' && 90 || 30 }}
-
-  build_web_artifacts:
-    needs: [checks, release_config]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: '1.4.2'
-      - run: bun ci
-        working-directory: web
-      - run: bun --bun run build
-        working-directory: web
-      - name: Archive production bundle
-        working-directory: web
-        run: tar -czf web-dist.tar.gz dist/
-      - uses: actions/upload-artifact@v7
-        with:
-          name: web-dist-${{ needs.release_config.outputs.release_type }}
-          path: web/web-dist.tar.gz
-          if-no-files-found: error
-          retention-days: ${{ needs.release_config.outputs.release_type == 'production' && 90 || 30 }}
+  checks:
+    needs: [release_config]
+    uses: ./.github/workflows/all_checks.yml
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
   test_docker_compose:
     needs: [checks]
-    if: github.event_name == 'workflow_dispatch' && !inputs.skip_docker
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - name: Build and start stack
-        run: docker compose up -d --build
-      - name: Check backend and web
-        run: |
-          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:3001/health
-          curl --fail --retry 30 --retry-delay 2 --retry-connrefused http://localhost:8081/
-      - name: Report failure
-        if: failure()
-        run: docker compose logs
-      - name: Cleanup
-        if: always()
-        run: docker compose down --volumes
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Verify development and production stacks
+        run: bash scripts/docker-smoke.sh
 
   build_docker_images:
-    needs: [checks, release_config, test_docker_compose]
-    if: >-
-      ${{ !cancelled() && !inputs.skip_docker && needs.checks.result == 'success' &&
-          needs.release_config.result == 'success' &&
-          (needs.test_docker_compose.result == 'success' || needs.test_docker_compose.result == 'skipped') }}
+    needs: [release_config, checks, test_docker_compose]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -122,111 +64,108 @@ jobs:
           - service: web
             context: ./web
             dockerfile: web/Dockerfile.prod
+          - service: proxy
+            context: ./proxy
+            dockerfile: proxy/Dockerfile
     steps:
-      - uses: actions/checkout@v6
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v6
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         id: meta
         with:
-          images: ${{ needs.release_config.outputs.registry }}/${{ matrix.service }}
+          images: ${{ needs.release_config.outputs.registry }}/${{ matrix.service }}${{ needs.release_config.outputs.image_suffix }}
           flavor: latest=false
           tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha
-            type=raw,value=latest,enable=${{ needs.release_config.outputs.release_type == 'production' && needs.release_config.outputs.prerelease != 'true' }}
-            type=raw,value=latest-dev,enable=${{ needs.release_config.outputs.release_type == 'development' }}
-      - uses: docker/build-push-action@v7
+            type=raw,value=${{ needs.release_config.outputs.version }}
+            type=sha,format=long
+            type=raw,value=latest,enable=${{ needs.release_config.outputs.prerelease == 'false' || needs.release_config.outputs.channel == 'dev' }}
+      - name: Build runtime image and push to GHCR
+        id: push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            io.mybrigitte.environment=${{ needs.release_config.outputs.environment }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.service }}-${{ needs.release_config.outputs.channel }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}-${{ needs.release_config.outputs.channel }}
+      - name: Record published digest
+        env:
+          SERVICE: ${{ matrix.service }}
+          IMAGE: ${{ needs.release_config.outputs.registry }}/${{ matrix.service }}${{ needs.release_config.outputs.image_suffix }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+          CHANNEL: ${{ needs.release_config.outputs.channel }}
+          VERSION: ${{ needs.release_config.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('image-' + os.environ['SERVICE'] + '.json').write_text(json.dumps({
+              'service': os.environ['SERVICE'], 'image': os.environ['IMAGE'],
+              'digest': os.environ['DIGEST'], 'channel': os.environ['CHANNEL'],
+              'version': os.environ['VERSION'],
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ghcr-image-${{ matrix.service }}
+          path: image-${{ matrix.service }}.json
+          if-no-files-found: error
 
   create_release:
-    needs: [backend, build_web_artifacts, release_config, build_docker_images]
-    if: >-
-      ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') &&
-          needs.release_config.outputs.release_type == 'production' &&
-          needs.backend.result == 'success' && needs.build_web_artifacts.result == 'success' &&
-          (needs.build_docker_images.result == 'success' || (inputs.skip_docker && needs.build_docker_images.result == 'skipped')) }}
+    needs: [release_config, build_docker_images]
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: mybrigitte-backend-linux-x86_64
-          path: release-assets
-      - uses: actions/download-artifact@v8
-        with:
-          name: web-dist-${{ needs.release_config.outputs.release_type }}
-          path: release-assets
-      - name: Download Android debug APK when available
-        if: needs.release_config.outputs.mobile_ready == 'true'
-        uses: actions/download-artifact@v8
-        with:
-          name: mobile-debug-apk
-          path: release-assets
-      - name: Generate release notes
+          pattern: ghcr-image-*
+          path: release-images
+          merge-multiple: true
+      - name: Generate registry-based release notes
         env:
-          REGISTRY: ${{ needs.release_config.outputs.registry }}
-          VERSION: ${{ github.ref_name }}
-          DOCKER_RESULT: ${{ needs.build_docker_images.result }}
-          MOBILE_READY: ${{ needs.release_config.outputs.mobile_ready }}
+          CHANNEL: ${{ needs.release_config.outputs.channel }}
+          VERSION: ${{ needs.release_config.outputs.version }}
         run: |
-          {
-            echo "# MyBrigitte $VERSION"
-            echo
-            echo '## Assets'
-            echo '- Backend: extract mybrigitte-backend-linux-x86_64.tar.gz and run ./backend (port 3001).'
-            echo '- Web: extract web-dist.tar.gz and serve dist/ using a static web server.'
-            if [ "$MOBILE_READY" = true ]; then
-              echo '- Android: debug APK for development; requires Metro. This is not a signed production build.'
-            else
-              echo '- Mobile: React Native project not initialized; no APK published.'
-            fi
-            if [ "$DOCKER_RESULT" = success ]; then
-              echo
-              echo '## Docker images'
-              echo '```bash'
-              echo "docker pull $REGISTRY/backend:$VERSION"
-              echo "docker pull $REGISTRY/web:$VERSION"
-              echo '```'
-              echo 'Backend listens on port 3001; web listens on port 80.'
-            fi
-          } > release_notes.md
-      - name: Publish GitHub Release
-        id: release
-        uses: softprops/action-gh-release@v3
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          images = [json.loads(p.read_text()) for p in sorted(Path('release-images').glob('image-*.json'))]
+          assert {i['service'] for i in images} == {'backend', 'web', 'proxy'}
+          assert all(i['channel'] == os.environ['CHANNEL'] and i['digest'].startswith('sha256:') for i in images)
+          manifest = {'channel': os.environ['CHANNEL'], 'version': os.environ['VERSION'], 'images': images}
+          Path('release-images.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          lines = ['# MyBrigitte ' + os.environ['VERSION'], '', 'All runtime images have been pushed to GHCR.', '', '```bash']
+          lines += ['docker pull ' + i['image'] + '@' + i['digest'] for i in images]
+          lines += ['```', '', 'Configure `BACKEND_IMAGE`, `WEB_IMAGE` and `PROXY_IMAGE` from the digest manifest, then run `docker compose pull` and `docker compose up -d --no-build --wait` with the environment-specific env file/project.', '',
+                    'Only the reverse proxy publishes a port. PostgreSQL data remains in the environment-specific volume.',
+                    'Development releases use separate `backend-dev`, `web-dev` and `proxy-dev` packages with runtime images, without local hot-reload tooling.',
+                    'Server credentials, TLS and deployment approval remain environment-specific.']
+          Path('release-notes.md').write_text('\n'.join(lines) + '\n')
+          PY
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ github.ref_name }}
-          body_path: release_notes.md
-          generate_release_notes: true
-          files: release-assets/*
+          body_path: release-notes.md
+          files: release-images.json
           fail_on_unmatched_files: true
           prerelease: ${{ needs.release_config.outputs.prerelease == 'true' }}
-      - name: Release summary
-        env:
-          RELEASE_URL: ${{ steps.release.outputs.url }}
-        run: echo "GitHub Release published at $RELEASE_URL" >> "$GITHUB_STEP_SUMMARY"
 
   mirror:
-    needs: [backend, build_web_artifacts, build_docker_images, create_release]
-    if: >-
-      ${{ !cancelled() && needs.backend.result == 'success' && needs.build_web_artifacts.result == 'success' &&
-          (needs.build_docker_images.result == 'success' || (inputs.skip_docker && needs.build_docker_images.result == 'skipped')) &&
-          (needs.create_release.result == 'success' || needs.create_release.result == 'skipped') }}
+    needs: [release_config, build_docker_images, create_release]
+    if: github.event_name == 'push' && needs.create_release.result == 'success'
     uses: ./.github/workflows/mirror.yml
     secrets: inherit

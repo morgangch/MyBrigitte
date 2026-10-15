@@ -1,0 +1,23 @@
+.user-row-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-row-name {
+  font-weight: 500;
+}
+
+.user-row-email {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.user-row-action {
+  text-align: right;
+}
+
+.user-row-action a {
+  display: inline-flex;
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,53 @@
+.segmented-field {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.segmented-field legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: var(--font-size-small);
+  font-weight: 500;
+}
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-small);
+  background: var(--color-surface-alt);
+}
+
+.segmented-option {
+  position: relative;
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: var(--radius-small);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+
+.segmented-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented-option:has(input:checked) {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.segmented-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+}
+
+.segmented-hint {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}

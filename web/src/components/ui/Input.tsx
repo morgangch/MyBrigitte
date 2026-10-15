@@ -4,7 +4,7 @@ import './ui.css'
 
 // Toutes les props d'un <input> HTML (type, name, required…) + label, error et icône
 type InputProps = ComponentProps<'input'> & {
-  label: string
+  label?: string
   error?: string | null
   icon?: LucideIcon | null
 }
@@ -13,7 +13,7 @@ export default function Input({ label, error, icon: Icon = null, ...props }: Inp
   const id = useId()
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
+      {label && <label htmlFor={id}>{label}</label>}
       <div className="input-wrapper">
         {Icon && <Icon className="input-icon" size={16} />}
         <input id={id} className="input-control" aria-invalid={Boolean(error)} {...props} />

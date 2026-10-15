@@ -10,8 +10,10 @@ export type Me = {
   last_name: string
   email: string
   phone_number: string | null
+  microsoft_email: string | null
+  has_password: boolean
   role: Role
-  team: { id: string; name: string } | null
+  team: Team | null
 }
 
 // GET /me/work-sessions : end_time à null = session en cours
@@ -51,4 +53,47 @@ export type DailySummary = {
   overtime_minutes: number
   late_minutes: number
   override_type: OverrideType | null
+}
+
+export type TodayStatus = 'present' | 'late' | 'not_arrived' | 'absent'
+
+// GET /teams
+export type Team = {
+  id: string
+  name: string
+}
+
+// GET /users
+export type User = {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string | null
+  role: Role
+  team: Team | null
+  today_status: TodayStatus
+}
+
+export type WorkPolicyMode = 'fixed' | 'flexible'
+
+export type NewWorkPolicy = {
+  mode: WorkPolicyMode
+  expected_minutes_per_week: number | null
+  default_break_minutes: number
+  late_tolerance_minutes: number
+  effective_from: string
+  weekday_start_time: string | null
+  weekday_end_time: string | null
+}
+
+// POST /users
+export type NewUser = {
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string | null
+  team_id: string | null
+  role: Role
+  work_policy: NewWorkPolicy
 }
