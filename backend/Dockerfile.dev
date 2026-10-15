@@ -1,0 +1,9 @@
+FROM rust:1.99-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+COPY backend ./backend
+COPY migration ./migration
+RUN cargo build --locked -p backend
+EXPOSE 3001
+CMD ["cargo", "run", "--locked", "-p", "backend"]

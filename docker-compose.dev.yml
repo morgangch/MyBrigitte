@@ -1,0 +1,74 @@
+name: mybrigitte-dev
+services:
+  seed:
+    logging:
+      driver: local
+      options:
+        max-size: '10m'
+        max-file: '3'
+    image: mybrigitte-seed-dev:local
+    build:
+      context: .
+      dockerfile: dev/seed/Dockerfile
+    environment:
+      APP_ENV: development
+      TZ: Europe/Paris
+      PGHOST: ${POSTGRES_HOST:-postgres}
+      PGPORT: ${POSTGRES_PORT:-5432}
+      PGUSER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:?Set POSTGRES_DB}
+    networks: [database]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: 'no'
+  backend:
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    read_only: false
+    image: mybrigitte-backend-dev:local
+    build:
+      dockerfile: backend/Dockerfile.dev
+    volumes:
+      - cargo_cache:/usr/local/cargo/registry
+      - backend_target:/app/target
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend/src
+          target: /app/backend/src
+        - action: rebuild
+          path: ./backend/Cargo.toml
+        - action: rebuild
+          path: ./Cargo.lock
+        - action: rebuild
+          path: ./Cargo.toml
+        - action: rebuild
+          path: ./migration
+    healthcheck:
+      start_period: 180s
+  web:
+    image: mybrigitte-web-dev:local
+    build:
+      dockerfile: Dockerfile.dev
+    environment:
+      API_PROXY_TARGET: http://backend:${PORT:-3001}
+    volumes:
+      - ./web:/app
+      - web_modules:/app/node_modules
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:5173/]
+  proxy:
+    environment:
+      WEB_UPSTREAM: web:5173
+      CSP_POLICY: >-
+        default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
+        img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:;
+        object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+
+volumes:
+  cargo_cache:
+  backend_target:
+  web_modules:
