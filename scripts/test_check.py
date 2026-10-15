@@ -26,6 +26,25 @@ class CheckTests(unittest.TestCase):
             self.assertFalse(CHECKS.run_group("test", [(CHECKS.ROOT, ["tool"]), (CHECKS.ROOT, ["tool"])]))
             self.assertEqual(run.call_count, 1)
 
+    def test_diff_selects_only_affected_components_and_audits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for client in ("web", "mobile"):
+                (root / client).mkdir()
+                (root / client / "package.json").write_text('{"scripts":{"lint":"lint"}}')
+            with patch.object(CHECKS, "ROOT", root):
+                self.assertEqual(set(CHECKS.groups("full", ["web/src/App.tsx"])), {"web", "web audit"})
+                self.assertEqual(set(CHECKS.groups("quick", ["backend/src/lib.rs"])), {"Backend"})
+                self.assertEqual(CHECKS.groups("full", ["README.md"]), {})
+                self.assertEqual(set(CHECKS.groups("full", ["Cargo.lock"])), {"Backend", "Rust audit"})
+
+    def test_shared_tooling_changes_keep_broad_checks_even_before_commit(self):
+        with patch.object(CHECKS.shutil, "which", return_value="/bin/tool"):
+            selected = CHECKS.groups("quick", ["scripts/check.py"])
+        self.assertIn("Backend", selected)
+        self.assertIn("Scripts", selected)
+        self.assertIn("Workflows", selected)
+
     def test_missing_audit_tool_blocks_instead_of_skipping(self):
         with patch.object(CHECKS.shutil, "which", side_effect=lambda name: None if name == "cargo-audit" else "/bin/cargo"), patch.object(
             CHECKS.subprocess, "run"

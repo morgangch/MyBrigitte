@@ -3,6 +3,9 @@ name: Web Build & Test
 on:
   workflow_call:
     inputs:
+      lightweight:
+        type: boolean
+        default: false
       enable_tests:
         type: boolean
         default: true
@@ -12,7 +15,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Detect initialized client
@@ -49,6 +52,6 @@ jobs:
             echo "web: no test script configured; tests skipped." >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Run build
-        if: steps.client.outputs.ready == 'true'
+        if: steps.client.outputs.ready == 'true' && !inputs.lightweight
         working-directory: web
         run: bun run --if-present build

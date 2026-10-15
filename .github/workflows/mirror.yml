@@ -15,7 +15,7 @@ jobs:
   push_to_mirror:
     name: "Mirror Repository"
     if: ${{ github.actor != 'github-actions[bot]' && vars.MIRROR_URL != '' && github.event.repository.ssh_url != vars.MIRROR_URL }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
