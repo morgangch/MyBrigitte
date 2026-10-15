@@ -1,4 +1,3 @@
-use crate::models::user::User;
 use sea_orm::entity::prelude::Uuid;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, Set};
 
@@ -13,17 +12,14 @@ pub async fn deactivate(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
     active_model.is_active = Set(false);
     active_model.updated_at = Set(chrono::Utc::now().fixed_offset());
 
-    active_model
-        .update(db)
-        .await
-        .map_err(|_| ApiError::InternalError)
+    active_model.update(db).await.map_err(ApiError::from_db)
 }
 
 pub async fn delete(db: &DatabaseConnection, id: Uuid) -> Result<(), ApiError> {
     let result = user::Entity::delete_by_id(id)
         .exec(db)
         .await
-        .map_err(|_| ApiError::NotFound)?;
+        .map_err(ApiError::from_db)?;
 
     if result.rows_affected == 0 {
         return Err(ApiError::NotFound);
@@ -63,7 +59,7 @@ pub async fn update(
     }
     if let Some(password) = input.password {
         let password_hash =
-            crate::auth::password::hash_password(&password).map_err(|_| ApiError::InternalError)?;
+            crate::auth::password::hash_password(&password).map_err(|_| ApiError::Internal)?;
         active_model.password_hash = Set(Some(password_hash));
     }
     if let Some(role) = input.role {
@@ -71,10 +67,7 @@ pub async fn update(
     }
     active_model.updated_at = Set(chrono::Utc::now().fixed_offset());
 
-    active_model
-        .update(db)
-        .await
-        .map_err(|_| ApiError::InternalError)
+    active_model.update(db).await.map_err(ApiError::from_db)
 }
 
 // Create
@@ -89,9 +82,9 @@ pub struct CreateUser {
 
 pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model, ApiError> {
     let password_hash = match input.password {
-        Some(password) => Some(
-            crate::auth::password::hash_password(&password).map_err(|_| ApiError::InternalError)?,
-        ),
+        Some(password) => {
+            Some(crate::auth::password::hash_password(&password).map_err(|_| ApiError::Internal)?)
+        }
         None => None,
     };
 
@@ -106,13 +99,7 @@ pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model,
         ..Default::default()
     };
 
-    active_model
-        .insert(db)
-        .await
-        .map_err(|error| match error.sql_err() {
-            Some(sea_orm::SqlErr::UniqueConstraintViolation(_)) => ApiError::Conflict,
-            _ => ApiError::InternalError,
-        })
+    active_model.insert(db).await.map_err(ApiError::from_db)
 }
 
 // Read
@@ -120,7 +107,7 @@ pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
     user::Entity::find_by_id(id)
         .one(db)
         .await
-        .map_err(|_| ApiError::InternalError)?
+        .map_err(ApiError::from_db)?
         .ok_or(ApiError::NotFound)
 }
 
@@ -128,41 +115,5 @@ pub async fn find_all(db: &DatabaseConnection) -> Result<Vec<Model>, ApiError> {
     user::Entity::find()
         .all(db)
         .await
-        .map_err(|_| ApiError::InternalError)
-}
-
-// Demo functions
-pub fn list_users() -> Result<Vec<User>, ApiError> {
-    // No data source yet
-    Err(ApiError::InternalError)
-}
-
-pub fn get_user(id: u32) -> Result<User, ApiError> {
-    if id > MAX_USER_ID {
-        return Err(ApiError::NotFound);
-    }
-
-    Ok(User {
-        id,
-        name: "User".to_string(),
-    })
-}
-
-const MAX_USER_ID: u32 = 100;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_user_returns_user_when_id_is_valid() {
-        let user = get_user(MAX_USER_ID).unwrap();
-        assert_eq!(user.id, MAX_USER_ID);
-    }
-
-    #[test]
-    fn test_get_user_returns_not_found_when_id_is_too_high() {
-        let result = get_user(MAX_USER_ID + 1);
-        assert!(matches!(result, Err(ApiError::NotFound)));
-    }
+        .map_err(ApiError::from_db)
 }

@@ -11,12 +11,6 @@ pub enum UserRole {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct User {
-    pub id: u32,
-    pub name: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
 pub struct UserResponse {
     pub id: Uuid,
     pub first_name: String,

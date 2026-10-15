@@ -1,28 +1,27 @@
 mod common;
 
-use axum::http::StatusCode;
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
+use tower::ServiceExt;
 
 #[tokio::test]
-async fn test_get_user_returns_user() {
-    let (status, json) = common::get_json("/users/1").await;
+async fn create_user_rejects_a_body_without_role() {
+    let request = Request::builder()
+        .method("POST")
+        .uri("/users")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"first_name":"Ada"}"#))
+        .unwrap();
 
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(json["id"], 1);
-    assert_eq!(json["name"], "User");
-}
+    let response = backend::create_app()
+        .with_state(backend::AppState::disconnect(
+            common::TEST_SECRET.to_string(),
+        ))
+        .oneshot(request)
+        .await
+        .unwrap();
 
-#[tokio::test]
-async fn test_get_user_returns_not_found() {
-    let (status, json) = common::get_json("/users/101").await;
-
-    assert_eq!(status, StatusCode::NOT_FOUND);
-    assert_eq!(json["error"], "Data not found");
-}
-
-#[tokio::test]
-async fn test_list_users_returns_internal_error() {
-    let (status, json) = common::get_json("/users").await;
-
-    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
-    assert_eq!(json["error"], "Internal server error");
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 }
