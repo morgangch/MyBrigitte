@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.2 AS bun
+FROM oven/bun:1.4.3 AS bun
 FROM postgres:18
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 WORKDIR /app
