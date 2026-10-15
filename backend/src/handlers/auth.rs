@@ -20,5 +20,5 @@ pub async fn login(
 ) -> Result<Json<Value>, ApiError> {
     let token =
         auth_service::login(&state.db, &body.email, &body.password, &state.jwt_secret).await?;
-    Ok(Json(json!({ "access_token": token })))
+    Ok(Json(json!({ "access_token": &token.access_token })))
 }
