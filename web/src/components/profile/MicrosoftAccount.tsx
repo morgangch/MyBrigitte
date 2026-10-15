@@ -1,9 +1,9 @@
-import { Badge, Button } from '../ui'
+import { Badge } from '../ui'
 import microsoftLogo from '../../assets/microsoft.svg'
 import './MicrosoftAccount.css'
 
 type MicrosoftAccountProps = {
-  email: string | null
+  email: string
 }
 
 export default function MicrosoftAccount({ email }: MicrosoftAccountProps) {
@@ -11,14 +11,10 @@ export default function MicrosoftAccount({ email }: MicrosoftAccountProps) {
     <div className="microsoft-account">
       <img src={microsoftLogo} alt="" className="microsoft-account-logo" />
       <div className="microsoft-account-text">
-        <p className="microsoft-account-title">
-          {email ? 'Compte Microsoft connecté' : 'Compte Microsoft non connecté'}
-        </p>
-        <p className="microsoft-account-email">
-          {email ?? 'Connectez-vous sans mot de passe avec votre compte professionnel.'}
-        </p>
+        <p className="microsoft-account-title">Compte Microsoft connecté</p>
+        <p className="microsoft-account-email">{email}</p>
       </div>
-      {email ? <Badge tone="success">Actif</Badge> : <Button>Connecter</Button>}
+      <Badge tone="success">Actif</Badge>
     </div>
   )
 }

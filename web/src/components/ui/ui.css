@@ -63,6 +63,11 @@
   background: var(--color-surface);
 }
 
+.input-wrapper:has(.input-control:read-only) {
+  background: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+}
+
 .input-wrapper:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-soft);
