@@ -53,14 +53,16 @@ def main():
                 output.write(summary)
         return 0 if gate(results) else 1
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+    event_name = os.environ["GITHUB_EVENT_NAME"]
     paths = []
     if os.environ["GITHUB_EVENT_NAME"] == "pull_request":
         base = event["pull_request"]["base"]["sha"]
         result = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", base, "HEAD"], capture_output=True, check=False)
         paths = result.stdout.decode().strip("\0").split("\0") if result.stdout else []
         if result.returncode != 0:
-            paths = ["unknown-base"]
-    values = plan(os.environ["GITHUB_EVENT_NAME"], event, paths)
+            print("Cannot compare PR base; selecting the full check profile.")
+            event_name = "diff-failed"
+    values = plan(event_name, event, paths)
     print(json.dumps(values, indent=2))
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         output.writelines(f"{key}={value}\n" for key, value in values.items())

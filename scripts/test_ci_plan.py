@@ -1,5 +1,10 @@
 import importlib.util
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 import unittest
 
 SPEC = importlib.util.spec_from_file_location("ci_plan", Path(__file__).with_name("ci-plan.py"))
@@ -9,6 +14,16 @@ DEV = {"pull_request": {"base": {"ref": "dev"}}}
 
 
 class PlanTests(unittest.TestCase):
+    def test_unavailable_git_base_falls_back_to_full_checks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "event.json").write_text(json.dumps({"pull_request": {"base": {"ref": "dev", "sha": "missing-base"}}}))
+            env = dict(os.environ, GITHUB_EVENT_NAME="pull_request", GITHUB_EVENT_PATH=str(root / "event.json"), GITHUB_OUTPUT=str(root / "output"))
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name("ci-plan.py").resolve())], cwd=root, env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            outputs = dict(line.split("=", 1) for line in (root / "output").read_text().splitlines())
+            self.assertTrue(all(value == "true" for value in outputs.values()))
+
     def test_web_pr_runs_only_web_and_audits(self):
         self.assertEqual(CI.plan("pull_request", DEV, ["web/src/App.tsx"]), {"full": "false", "backend": "false", "web": "true", "mobile": "false", "scan_actions": "false"})
 

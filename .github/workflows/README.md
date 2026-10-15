@@ -45,7 +45,8 @@ requests and the Quality Gate Decision status check before merging into main
 
 `scripts/ci-plan.py` computes the profile and validates Quality Gate Decision.
 Dev PR file selection uses a two-commit checkout and the event's base SHA. Shared
-files, unknown paths or a failed diff select all components. Markdown at the
+files and unknown paths select all components; a failed diff selects the full
+profile, including coverage and CodeQL. Markdown at the
 repository root and docs changes do not compile components. Validation always
 runs actionlint and the Python tests; dependency audits always run. A skipped,
 failed or cancelled required job cannot produce a green gate.
