@@ -51,6 +51,7 @@ repository root and docs changes do not compile components. Validation always
 runs actionlint and the Python tests; dependency audits always run. A skipped,
 failed or cancelled required job cannot produce a green gate.
 
+Runners are pinned to Ubuntu 24.04 rather than following ubuntu-latest migrations.
 Rust 1.99.0 keeps cache keys stable and matches the Docker toolchain. Rust caches
 include workspace artifacts and remain separate for build/tests, Clippy and LLVM
 coverage. The new prefix starts caches that retain workspace artifacts. Cargo
