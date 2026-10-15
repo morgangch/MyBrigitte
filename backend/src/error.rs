@@ -5,6 +5,7 @@ use axum::{
 };
 use sea_orm::{DbErr, SqlErr};
 use serde_json::json;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum ApiError {
@@ -14,6 +15,7 @@ pub enum ApiError {
     ForeignKey,
     Unauthorized,
     Internal,
+    ValidationFailed(HashMap<String, String>),
 }
 
 impl ApiError {
@@ -30,36 +32,56 @@ impl ApiError {
             _ => Self::Internal,
         }
     }
-    // Returns the http code and response
-    fn status_code_and_body(&self) -> (StatusCode, &'static str, &'static str) {
-        match self {
-            ApiError::NotFound => (StatusCode::NOT_FOUND, "not_found", "Data not found"),
-            ApiError::EmailTaken => (StatusCode::CONFLICT, "email_taken", "Email already taken"),
-            ApiError::Conflict => (StatusCode::CONFLICT, "conflict", "Value already taken"),
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        let (status, code, message, fields) = match self {
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "not_found", "Data not found", None),
+            ApiError::EmailTaken => (
+                StatusCode::CONFLICT,
+                "email_taken",
+                "Email already taken",
+                None,
+            ),
+            ApiError::Conflict => (
+                StatusCode::CONFLICT,
+                "conflict",
+                "Value already taken",
+                None,
+            ),
             ApiError::ForeignKey => (
                 StatusCode::CONFLICT,
                 "foreign_key",
                 "Related data is missing",
+                None,
             ),
-            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized", "Unauthorized"),
+            ApiError::Unauthorized => (
+                StatusCode::UNAUTHORIZED,
+                "unauthorized",
+                "Unauthorized",
+                None,
+            ),
             ApiError::Internal => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "internal_error",
                 "Internal server error",
+                None,
             ),
-        }
-    }
-}
-// Returns the response
-impl IntoResponse for ApiError {
-    fn into_response(self) -> Response {
-        let (status, code, message) = self.status_code_and_body();
-        let body = Json(json!({
-            "code": code,
-            "message": message
-        }));
+            ApiError::ValidationFailed(fields) => (
+                StatusCode::BAD_REQUEST,
+                "validation_failed",
+                "Invalid request",
+                Some(fields),
+            ),
+        };
 
-        (status, body).into_response()
+        let mut error = json!({ "code": code, "message": message });
+        if let Some(fields) = fields {
+            error["fields"] = json!(fields);
+        }
+
+        (status, Json(json!({ "error": error }))).into_response()
     }
 }
 
@@ -85,6 +107,14 @@ mod tests {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "internal_error",
             ),
+            (
+                ApiError::ValidationFailed(HashMap::from([(
+                    "email".to_string(),
+                    "invalid email".to_string(),
+                )])),
+                StatusCode::BAD_REQUEST,
+                "validation_failed",
+            ),
         ];
 
         for (error, expected_status, expected_code) in test_cases {
@@ -93,8 +123,11 @@ mod tests {
 
             let bytes = response.into_body().collect().await.unwrap().to_bytes();
             let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-            assert_eq!(json["code"], expected_code);
-            assert!(json["message"].is_string());
+            assert_eq!(json["error"]["code"], expected_code);
+            assert!(json["error"]["message"].is_string());
+            if expected_code == "validation_failed" {
+                assert_eq!(json["error"]["fields"]["email"], "invalid email");
+            }
         }
     }
 }
