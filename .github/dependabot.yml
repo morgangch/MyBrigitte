@@ -2,17 +2,30 @@ version: 2
 updates:
   - package-ecosystem: cargo
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
+    groups:
+      rust-dependencies:
+        patterns: ['*']
   - package-ecosystem: bun
     directory: /web
+    target-branch: dev
     schedule:
       interval: weekly
+    groups:
+      frontend-dependencies:
+        patterns: ['*']
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ['*']
   - package-ecosystem: docker
+    target-branch: dev
     directories:
       - /backend
       - /web
@@ -20,3 +33,6 @@ updates:
       - /dev/seed
     schedule:
       interval: weekly
+    groups:
+      docker-images:
+        patterns: ['*']
