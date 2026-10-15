@@ -71,8 +71,20 @@ Configure GHCR read access for private packages on the target. No automatic SSH
 server deployment is configured. Watchtower remains absent; migrations and
 rollback must be coordinated before enabling automatic container replacement.
 
-Security scans, coverage reports and deployment tooling are separate work in
-`cicd/security-coverage`, not part of this Docker/release branch.
+## Additional CI security and coverage
+
+This branch adds `security.yml`: RustSec Cargo dependency audit, Bun high/critical
+advisory audit and CodeQL security-extended reports for Rust, TS/JS and Actions.
+Dependency findings fail CI; CodeQL findings need repository code-scanning merge
+rules to enforce severity thresholds. Dependabot checks Cargo, Bun, Docker and
+GitHub Actions weekly. Security results join Quality Gate Decision.
+
+`coverage.yml` runs backend tests under LLVM instrumentation and uploads LCOV,
+HTML and a percentage summary. Coverage joins the quality gate but has no arbitrary
+percentage threshold while business endpoints remain under construction. The
+additional jobs require a real GitHub run; local YAML validation is not a remote
+success certificate. Accessibility/browser CI is still pending. Mirroring summary
+shell quoting is corrected without changing its target or credentials.
 
 ## Local checks
 
@@ -98,3 +110,23 @@ bun run --if-present build
 
 See [the project README](../../README.md), [contribution guidelines](../../CONTRIBUTING.md),
 and [Microsoft configuration names](../../backend/.env.example).
+
+## Registry deployment helper
+
+Download `release-images.json` from a matching release, configure environment
+secrets/GHCR read access, then run:
+
+```bash
+python3 scripts/deploy-registry.py prod .env release-images.json
+python3 scripts/deploy-registry.py dev .env.dev release-images.json
+```
+
+The helper validates the channel and digest-pinned image references, rejects
+placeholder hosted secrets, serializes deployments on the server, pulls images,
+runs migrations and starts Compose with `--no-build --wait`. Development hosting
+uses a separate `mybrigitte-dev-hosted` project, runtime images and no fixture seed.
+DB volumes are preserved. No SSH target or remote deployment workflow is enabled.
+A previous image manifest can be used for application rollback only when the
+schema remains compatible; this does not replace backups or reverse migrations.
+Tests cover channel separation, missing/duplicate services, image origins and
+invalid digests. Run `python3 -m unittest discover -s scripts -p 'test_*.py'`.
