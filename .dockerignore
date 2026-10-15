@@ -1,0 +1,10 @@
+.git
+.agents
+.codex
+.aws
+**/.env
+**/.env.*
+target
+**/node_modules
+**/dist
+*.pdf

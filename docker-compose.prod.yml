@@ -1,0 +1,5 @@
+# Optional explicit production override. The default docker-compose.yml is production.
+name: mybrigitte-prod
+services:
+  proxy:
+    restart: unless-stopped
