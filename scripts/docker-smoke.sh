@@ -8,7 +8,7 @@ prod_project="mybrigitte-smoke-prod-$suffix"
 dev_port="${SMOKE_DEV_PORT:-15173}"
 prod_port="${SMOKE_PROD_PORT:-18081}"
 dev() { PORT="${SMOKE_DEV_API_PORT:-3901}" WEB_PORT="$dev_port" docker compose -p "$dev_project" --env-file .env.dev.example -f docker-compose.yml -f docker-compose.dev.yml "$@"; }
-prod() { PORT="${SMOKE_PROD_API_PORT:-3902}" WEB_PORT="$prod_port" docker compose -p "$prod_project" --env-file .env.prod.example -f docker-compose.yml -f docker-compose.prod.yml "$@"; }
+prod() { PORT="${SMOKE_PROD_API_PORT:-3902}" WEB_PORT="$prod_port" docker compose -p "$prod_project" --env-file .env.example -f docker-compose.yml -f docker-compose.prod.yml "$@"; }
 cleanup() {
   result=$?
   if [ "$result" -ne 0 ]; then dev logs; prod logs; fi
