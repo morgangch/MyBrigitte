@@ -3,6 +3,9 @@ name: React Native Build & Test
 on:
   workflow_call:
     inputs:
+      lightweight:
+        type: boolean
+        default: false
       enable_tests:
         type: boolean
         default: true
@@ -53,23 +56,23 @@ jobs:
             echo "mobile: no test script configured; tests skipped." >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Run build
-        if: steps.client.outputs.ready == 'true'
+        if: steps.client.outputs.ready == 'true' && !inputs.lightweight
         working-directory: mobile
         run: bun run --if-present build
       - name: Detect native Android project
         id: android
         run: echo "ready=$(test -f mobile/android/gradlew && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true' && !inputs.lightweight
         with:
           distribution: temurin
           java-version: '17'
       - name: Build Android debug APK
-        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true' && !inputs.lightweight
         working-directory: mobile/android
         run: bash ./gradlew assembleDebug
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true'
+        if: steps.client.outputs.ready == 'true' && steps.android.outputs.ready == 'true' && !inputs.lightweight
         with:
           name: mobile-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/*.apk

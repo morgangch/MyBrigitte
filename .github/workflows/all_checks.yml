@@ -32,37 +32,50 @@ jobs:
     with:
       strict_mode: ${{ inputs.strict_validation || false }}
   backend_code_quality:
+    if: needs.repository_validation.outputs.backend == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/backend_code_quality.yml
   backend_build_test:
+    if: needs.repository_validation.outputs.backend == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/backend_build_test.yml
     with:
+      lightweight: ${{ needs.repository_validation.outputs.full != 'true' }}
       enable_tests: ${{ !inputs.skip_tests }}
   web_code_quality:
+    if: needs.repository_validation.outputs.web == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/web_code_quality.yml
   web_build_test:
+    if: needs.repository_validation.outputs.web == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/web_build_test.yml
     with:
+      lightweight: ${{ needs.repository_validation.outputs.full != 'true' }}
       enable_tests: ${{ !inputs.skip_tests }}
   mobile_code_quality:
+    if: needs.repository_validation.outputs.mobile == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/mobile_code_quality.yml
   mobile_build_test:
+    if: needs.repository_validation.outputs.mobile == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/mobile_build_test.yml
     with:
+      lightweight: ${{ needs.repository_validation.outputs.full != 'true' }}
       enable_tests: ${{ !inputs.skip_tests }}
   security:
     needs: [repository_validation]
     uses: ./.github/workflows/security.yml
+    with:
+      full_scan: ${{ needs.repository_validation.outputs.full == 'true' }}
+      scan_actions: ${{ needs.repository_validation.outputs.scan_actions == 'true' }}
     permissions:
       contents: read
       security-events: write
       actions: read
   coverage:
+    if: needs.repository_validation.outputs.full == 'true'
     needs: [repository_validation]
     uses: ./.github/workflows/coverage.yml
   quality_gate:
@@ -71,9 +84,8 @@ jobs:
     needs: [repository_validation, backend_code_quality, backend_build_test, web_code_quality, web_build_test, mobile_code_quality, mobile_build_test, security, coverage]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Require all checks to pass
         env:
           RESULTS: ${{ toJSON(needs) }}
-        run: |
-          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"' >> "$GITHUB_STEP_SUMMARY"
-          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' > /dev/null
+        run: python3 scripts/ci-plan.py gate

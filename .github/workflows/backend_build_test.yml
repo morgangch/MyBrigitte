@@ -3,6 +3,9 @@ name: Backend Build & Test
 on:
   workflow_call:
     inputs:
+      lightweight:
+        type: boolean
+        default: false
       enable_tests:
         type: boolean
         default: true
@@ -16,11 +19,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: '1.99.0'
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           shared-key: backend-build
-      - name: cargo build --workspace --locked
+          prefix-key: v1-workspace
+          cache-workspace-crates: true
+      - name: Build workspace when tests are disabled
+        if: ${{ !inputs.enable_tests }}
         run: cargo build --workspace --locked
-      - name: cargo test --workspace --locked
-        if: inputs.enable_tests
+      - name: Unit tests for development PRs
+        if: inputs.enable_tests && inputs.lightweight
+        run: cargo test --workspace --lib --bins --locked
+      - name: Full workspace tests
+        if: inputs.enable_tests && !inputs.lightweight
         run: cargo test --workspace --locked

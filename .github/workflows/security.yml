@@ -2,6 +2,13 @@ name: Security Checks
 
 on:
   workflow_call:
+    inputs:
+      full_scan:
+        type: boolean
+        default: true
+      scan_actions:
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -11,7 +18,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
       - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2
         with:
           tool: cargo-audit
@@ -30,6 +36,7 @@ jobs:
         run: bun audit --audit-level=high
 
   codeql:
+    if: inputs.full_scan || inputs.scan_actions
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -38,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [rust, javascript-typescript, actions]
+        language: ${{ fromJSON(inputs.full_scan && '["rust", "javascript-typescript", "actions"]' || '["actions"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4
