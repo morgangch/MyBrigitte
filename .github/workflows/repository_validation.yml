@@ -35,18 +35,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
-        with:
-          toolchain: '1.99.0'
       - name: Select check profile
         id: plan
         run: python3 scripts/ci-plan.py
-      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2
-        with:
-          tool: actionlint@1.7.12
       - name: Validate workflow syntax and CI policy tests
         run: |
-          actionlint
+          docker run --rm -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
           python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Validate workspace and project structure
         run: |
