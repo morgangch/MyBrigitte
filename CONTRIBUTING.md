@@ -54,33 +54,58 @@ Commit early and often; squash or tidy history before merging if appropriate.
 - Web and React Native clients: follow their ESLint and Prettier configuration and use TypeScript types where available.
 - Run the checks for the component you changed before pushing.
 
-Install Python 3, Rust (including rustfmt and Clippy), and Bun 1.4.2. Then, from
-the repository root, install the audit tool and enable the versioned Git hooks:
+Local hooks require Git, Bash, tar, standard shell utilities and Docker Compose v2 with a running Docker
+engine. Rust, Bun, Python, cargo-audit and actionlint run in the dedicated checks
+image; they do not need to be installed on your machine. Enable the hooks once:
 
 ```bash
-cargo install --locked cargo-audit
 make hooks
+make check-quick  # Builds the tools image on the first run
+make audit       # RustSec and Bun audits
+make check       # Complete local gate
 ```
 
 Hook installation changes only this clone's `core.hooksPath` and refuses to
-overwrite existing custom hooks. Every clone needs this setup once.
-The pre-commit hook checks Rust formatting and client lint/format/types. The
-pre-push hook additionally runs RustSec and Bun dependency audits, Clippy,
-workspace tests, client tests/builds and Python script tests. If installed,
-`actionlint` also validates the workflows. CodeQL still runs on GitHub.
+replace custom hooks. Pre-commit selects components from the staged diff and
+checks the exact index snapshot, including partial commits. It checks Rust
+formatting and client lint/format/types. Pre-push selects components from each
+outgoing ref's diff against its remote commit and checks that outgoing commit;
+it adds audits, Clippy, complete workspace tests and client tests/builds for
+those components. Shared tooling changes select all components and also run
+Python tests and actionlint. Both hooks use the CI component classifier.
+Documentation-only diffs skip Docker entirely.
 
-Run these same gates manually from the root with `make check-quick`, `make audit`
-or `make check`. The Python entry point also works from another directory:
-`python3 /path/to/MyBrigitte/scripts/check.py audit`. Independent checks run in
-parallel, while Cargo compilation commands remain sequential. Existing Cargo and
-Bun caches are reused; client installation uses `bun ci` and never updates the
-lockfile. Uninitialized clients are skipped. Checks do not read `.env` files or
-start Docker/PostgreSQL; backend tests run without a live database.
+New branches use their merge base with remote dev (or main). Tags and unavailable
+bases run all checks; deleted refs are skipped. Multiple outgoing refs are checked
+separately. Unstaged/untracked changes cannot interfere with these snapshots.
+Manual `make check-quick`, `make audit` and `make check` still check all components
+using tracked and unignored working files.
 
-Audits require network access and block pushes on RustSec vulnerabilities or
-high/critical frontend advisories; a failed audit is never silently skipped.
-Git hooks check the working tree, so run them with the intended changes present.
-They supplement the required CI checks and do not enforce repository protection.
+The wrapper works from subdirectories and linked worktrees. Archives exclude
+`.env` files and Git metadata. The container has no repository bind mount or
+Docker socket and cannot change host source or create root-owned node_modules
+there. Temporary snapshots include the current checker so older outgoing commits
+can also be checked.
+
+The tools image rebuilds only when its definition changes. The
+`mybrigitte-checks_checks_cache` volume retains Cargo registry/build outputs,
+Bun downloads, node_modules and frontend build output. A lock serializes runs
+sharing this cache. The initial build and compile are slower; subsequent runs
+reuse them. Set `CHECKS_CARGO_JOBS` to adjust compilation parallelism (default 4).
+No app containers or database are started. `.env` is not loaded by Compose.
+Audits refresh vulnerability information and require network access; they fail
+on RustSec findings or high/critical frontend advisories. Checks do not fix code.
+
+On GitHub, PRs into `dev` run audits and lint/types plus unit tests for affected
+components; production/Android builds, integration/doc tests, coverage and full
+CodeQL remain on main PRs, manual checks and releases. Workflow changes to dev
+retain Actions CodeQL. Shared/unknown source changes check all components;
+documentation-only changes retain audits and tooling validation. The Quality Gate
+rejects any missing/failed required job and only accepts skips selected by the
+plan. Local pre-push retains complete tests/builds for affected components on every branch.
+
+The following native commands are optional for contributors who already have the
+toolchains installed; CI uses pinned tools directly on its runners:
 
 Backend checks (from the repository root):
 

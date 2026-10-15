@@ -2,6 +2,17 @@ name: Repository Validation
 
 on:
   workflow_call:
+    outputs:
+      full:
+        value: ${{ jobs.validate.outputs.full }}
+      backend:
+        value: ${{ jobs.validate.outputs.backend }}
+      web:
+        value: ${{ jobs.validate.outputs.web }}
+      mobile:
+        value: ${{ jobs.validate.outputs.mobile }}
+      scan_actions:
+        value: ${{ jobs.validate.outputs.scan_actions }}
     inputs:
       strict_mode:
         description: Require initialized web and mobile clients
@@ -13,10 +24,24 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    outputs:
+      full: ${{ steps.plan.outputs.full }}
+      backend: ${{ steps.plan.outputs.backend }}
+      web: ${{ steps.plan.outputs.web }}
+      mobile: ${{ steps.plan.outputs.mobile }}
+      scan_actions: ${{ steps.plan.outputs.scan_actions }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - name: Select check profile
+        id: plan
+        run: python3 scripts/ci-plan.py
+      - name: Validate workflow syntax and CI policy tests
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+          python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Validate workspace and project structure
         run: |
           for file in Cargo.toml Cargo.lock backend/Cargo.toml backend/src/main.rs README.md CONTRIBUTING.md CODE_OF_CONDUCT.md backend/.env.example; do

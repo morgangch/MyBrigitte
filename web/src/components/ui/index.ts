@@ -1,4 +1,5 @@
 export { default as Avatar } from './Avatar.tsx'
+export { default as AvatarGroup } from './AvatarGroup.tsx'
 export { default as Badge } from './Badge.tsx'
 export { default as Button } from './Button.tsx'
 export { default as Card } from './Card.tsx'

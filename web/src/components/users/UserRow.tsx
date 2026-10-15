@@ -2,24 +2,27 @@ import type { ComponentProps } from 'react'
 import { Link } from 'react-router'
 import { ChevronRight } from 'lucide-react'
 import { Avatar, Badge } from '../ui'
-import { ROLE_LABELS, TODAY_STATUS_LABELS } from '../../lib/labels.ts'
-import type { TodayStatus, User } from '../../types/api.ts'
+import { PRESENCE_STATUS_LABELS, ROLE_LABELS } from '../../lib/labels.ts'
+import type { PresenceStatus, User } from '../../types/api.ts'
 import './UserRow.css'
 
 type BadgeTone = ComponentProps<typeof Badge>['tone']
 
-const TODAY_STATUS_TONES: Record<TodayStatus, BadgeTone> = {
+const PRESENCE_STATUS_TONES: Record<PresenceStatus, BadgeTone> = {
   present: 'success',
   late: 'warning',
+  away: 'neutral',
   not_arrived: 'neutral',
   absent: 'danger',
+  day_off: 'neutral',
 }
 
 type UserRowProps = {
   user: User
+  status: PresenceStatus | undefined
 }
 
-export default function UserRow({ user }: UserRowProps) {
+export default function UserRow({ user, status }: UserRowProps) {
   const fullName = `${user.first_name} ${user.last_name}`
 
   return (
@@ -39,7 +42,7 @@ export default function UserRow({ user }: UserRowProps) {
         <Badge tone={user.role === 'manager' ? 'primary' : 'neutral'}>{ROLE_LABELS[user.role]}</Badge>
       </td>
       <td>
-        <Badge tone={TODAY_STATUS_TONES[user.today_status]}>{TODAY_STATUS_LABELS[user.today_status]}</Badge>
+        {status ? <Badge tone={PRESENCE_STATUS_TONES[status]}>{PRESENCE_STATUS_LABELS[status]}</Badge> : '—'}
       </td>
       <td className="user-row-action">
         <Link to={`/users/${user.id}`} aria-label={`Voir ${fullName}`}>

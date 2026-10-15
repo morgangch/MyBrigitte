@@ -1,9 +1,9 @@
 import HistoryRow from './HistoryRow.tsx'
 import { sessionsOfDay } from '../../lib/history.ts'
-import type { DailySummary, WorkSession } from '../../types/api.ts'
+import type { DayStats, WorkSession } from '../../types/api.ts'
 
 type HistoryTableProps = {
-  days: DailySummary[]
+  days: DayStats[]
   sessions: WorkSession[]
   todayKey: string
 }

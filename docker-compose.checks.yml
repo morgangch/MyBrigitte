@@ -1,0 +1,13 @@
+name: mybrigitte-checks
+services:
+  checks:
+    build:
+      context: ./dev/checks
+    init: true
+    working_dir: /workspace
+    environment:
+      CARGO_BUILD_JOBS: ${CHECKS_CARGO_JOBS:-4}
+    volumes:
+      - checks_cache:/cache
+volumes:
+  checks_cache:

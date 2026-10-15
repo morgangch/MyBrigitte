@@ -198,7 +198,7 @@ Release CI runs this check before publishing Docker images, including on tags.
 
 ## Development outside Docker
 
-Use Rust 1.99 and Bun 1.4.2. Provide a local PostgreSQL instance. Use
+Use Rust 1.99 and Bun 1.4.3. Provide a local PostgreSQL instance. Use
 [backend/.env.example](backend/.env.example) as a reference and export
 `DATABASE_URL`, `PORT` and `JWT_SECRET` for the host process. Preserve the root
 production `.env`; explicit process environment values take precedence.
