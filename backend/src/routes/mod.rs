@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod user;
 
 use axum::{Router, routing::get};
@@ -8,4 +9,5 @@ pub fn create_app() -> Router<AppState> {
     Router::new()
         .route("/health", get(health_check))
         .merge(user::user_routes())
+        .merge(auth::auth_routes())
 }
