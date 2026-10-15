@@ -14,6 +14,36 @@ DEV = {"pull_request": {"base": {"ref": "dev"}}}
 
 
 class PlanTests(unittest.TestCase):
+    def test_shallow_checkout_fetches_the_event_base_without_full_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            origin = root / "origin"
+            origin.mkdir()
+            subprocess.run(["git", "init", "-q", "-b", "main", str(origin)], check=True)
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=origin, text=True).strip()
+            git("config", "user.name", "CI Test")
+            git("config", "user.email", "ci-test@example.invalid")
+            (origin / "README.md").write_text("base")
+            git("add", ".")
+            git("commit", "-q", "-m", "base")
+            base = git("rev-parse", "HEAD")
+            (origin / "web/src").mkdir(parents=True)
+            for version in ("first", "second"):
+                (origin / "web/src/App.tsx").write_text(version)
+                git("add", ".")
+                git("commit", "-q", "-m", version)
+            checkout = root / "checkout"
+            subprocess.run(["git", "clone", "-q", "--depth=2", origin.as_uri(), str(checkout)], check=True)
+            (root / "event.json").write_text(json.dumps({"pull_request": {"base": {"ref": "dev", "sha": base}}}))
+            env = dict(os.environ, GITHUB_EVENT_NAME="pull_request", GITHUB_EVENT_PATH=str(root / "event.json"), GITHUB_OUTPUT=str(root / "output"))
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name("ci-plan.py").resolve())], cwd=checkout, env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            outputs = dict(line.split("=", 1) for line in (root / "output").read_text().splitlines())
+            self.assertEqual(outputs["full"], "false")
+            self.assertEqual(outputs["web"], "true")
+            self.assertEqual(outputs["backend"], "false")
+
     def test_unavailable_git_base_falls_back_to_full_checks(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

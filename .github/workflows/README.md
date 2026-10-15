@@ -44,7 +44,8 @@ requests and the Quality Gate Decision status check before merging into main
 | Manual checks / release workflow calls | Full checks regardless of branch/tag | Full CodeQL + audits | Enabled |
 
 `scripts/ci-plan.py` computes the profile and validates Quality Gate Decision.
-Dev PR file selection uses a two-commit checkout and the event's base SHA. Shared
+Dev PR file selection uses a two-commit checkout and the event's base SHA, fetching
+that single base commit if it is missing when dev advances during a run. Shared
 files and unknown paths select all components; a failed diff selects the full
 profile, including coverage and CodeQL. Markdown at the
 repository root and docs changes do not compile components. Validation always

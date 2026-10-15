@@ -4,6 +4,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -57,6 +58,11 @@ def main():
     paths = []
     if os.environ["GITHUB_EVENT_NAME"] == "pull_request":
         base = event["pull_request"]["base"]["sha"]
+        if re.fullmatch(r"[0-9a-fA-F]{40}", base):
+            present = subprocess.run(["git", "cat-file", "-e", base + "^{commit}"], capture_output=True, check=False)
+            if present.returncode != 0:
+                # The merge ref can advance beyond the event's base in a shallow checkout.
+                subprocess.run(["git", "fetch", "--no-tags", "--depth=1", "origin", base], capture_output=True, check=False)
         result = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", base, "HEAD"], capture_output=True, check=False)
         paths = result.stdout.decode().strip("\0").split("\0") if result.stdout else []
         if result.returncode != 0:
