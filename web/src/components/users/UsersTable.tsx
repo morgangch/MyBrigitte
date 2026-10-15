@@ -1,13 +1,14 @@
 import UserRow from './UserRow.tsx'
-import type { User } from '../../types/api.ts'
+import type { PresenceStatus, User } from '../../types/api.ts'
 import './UsersTable.css'
 
 type UsersTableProps = {
   users: User[]
+  presenceByUser: Map<string, PresenceStatus>
   totalCount: number
 }
 
-export default function UsersTable({ users, totalCount }: UsersTableProps) {
+export default function UsersTable({ users, presenceByUser, totalCount }: UsersTableProps) {
   return (
     <>
       <table className="table">
@@ -23,7 +24,7 @@ export default function UsersTable({ users, totalCount }: UsersTableProps) {
         </thead>
         <tbody>
           {users.map((user) => (
-            <UserRow key={user.id} user={user} />
+            <UserRow key={user.id} user={user} status={presenceByUser.get(user.id)} />
           ))}
           {users.length === 0 && (
             <tr>

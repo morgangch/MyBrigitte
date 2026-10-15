@@ -1,20 +1,20 @@
 import { Bar, BarChart, Rectangle, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis, type BarShapeProps } from 'recharts'
 import { Card } from '../ui'
 import { formatDuration } from '../../lib/time.ts'
-import type { DailySummary } from '../../types/api.ts'
+import type { DayStats } from '../../types/api.ts'
 import './WeekChart.css'
 
-const workedHours = (day: DailySummary) => (day.worked_minutes - day.overtime_minutes) / 60
-const overtimeHours = (day: DailySummary) => day.overtime_minutes / 60
+const workedHours = (day: DayStats) => (day.stats.worked_minutes - day.stats.overtime_minutes) / 60
+const overtimeHours = (day: DayStats) => day.stats.overtime_minutes / 60
 const formatWeekday = (date: string) => new Date(`${date}T12:00`).toLocaleDateString('fr-FR', { weekday: 'short' })
 
 type WeekChartProps = {
-  days: DailySummary[]
+  days: DayStats[]
 }
 
 function WorkedBar(props: BarShapeProps) {
-  const day = props.payload as DailySummary
-  return <Rectangle {...props} radius={day.overtime_minutes > 0 ? 0 : [4, 4, 0, 0]} />
+  const day = props.payload as DayStats
+  return <Rectangle {...props} radius={day.stats.overtime_minutes > 0 ? 0 : [4, 4, 0, 0]} />
 }
 
 export default function WeekChart({ days }: WeekChartProps) {

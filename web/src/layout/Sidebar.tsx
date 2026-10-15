@@ -5,18 +5,28 @@ import { ME } from '../lib/fakeData.ts'
 import { ROLE_LABELS } from '../lib/labels.ts'
 import './Sidebar.css'
 
-const MENU = {
-  'Mon espace': [
-    { label: 'Tableau de bord', path: '/', icon: LayoutDashboard },
-    { label: 'Mon historique', path: '/history', icon: History },
-    { label: 'Mon profil', path: '/profile', icon: CircleUser },
-  ],
-  'Management': [
-    { label: 'Utilisateurs', path: '/users', icon: UserCog },
-    { label: 'Équipes', path: '/teams', icon: Users },
-    { label: 'Rapports', path: '/reports', icon: ChartColumn },
-  ],
-}
+const MENU = [
+  {
+    title: 'Mon espace',
+    managerOnly: false,
+    items: [
+      { label: 'Tableau de bord', path: '/', icon: LayoutDashboard },
+      { label: 'Mon historique', path: '/history', icon: History },
+      { label: 'Mon profil', path: '/profile', icon: CircleUser },
+    ],
+  },
+  {
+    title: 'Management',
+    managerOnly: true,
+    items: [
+      { label: 'Utilisateurs', path: '/users', icon: UserCog },
+      { label: 'Équipes', path: '/teams', icon: Users },
+      { label: 'Rapports', path: '/reports', icon: ChartColumn },
+    ],
+  },
+]
+
+const VISIBLE_MENU = MENU.filter((section) => !section.managerOnly || ME.role === 'manager')
 
 export default function Sidebar() {
   return (
@@ -24,11 +34,11 @@ export default function Sidebar() {
       <NavLink to="/" end className="sidebar-logo">
         <Logo variant="horizontalDark" />
       </NavLink>
-      {Object.entries(MENU).map(([sectionTitle, items]) => (
-        <div key={sectionTitle} className="menu-section">
-          <p className="menu-title">{sectionTitle}</p>
+      {VISIBLE_MENU.map((section) => (
+        <div key={section.title} className="menu-section">
+          <p className="menu-title">{section.title}</p>
           <ul className="menu-list">
-            {items.map((item) => {
+            {section.items.map((item) => {
               const Icon = item.icon
               return (
                 <li key={item.path}>

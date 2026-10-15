@@ -7,8 +7,8 @@ import type { NewUser, NewWorkPolicy, Role, WorkPolicyMode } from '../../types/a
 import './AddUserDrawer.css'
 
 const TEAM_OPTIONS = [
-  { value: '', label: 'Aucune équipe' },
-  ...TEAMS.map((team) => ({ value: team.id, label: team.name })),
+  { value: '', label: 'Choisir une équipe' },
+  ...TEAMS.items.map((team) => ({ value: team.id, label: team.name })),
 ]
 
 const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))
@@ -93,7 +93,7 @@ export default function AddUserDrawer({ open, onClose, onCreate }: AddUserDrawer
       last_name: readText(formData, 'last_name'),
       email: readText(formData, 'email'),
       phone_number: readText(formData, 'phone_number') || null,
-      team_id: readText(formData, 'team_id') || null,
+      team_id: readText(formData, 'team_id'),
       role,
       work_policy: workPolicy,
     })
@@ -145,10 +145,10 @@ export default function AddUserDrawer({ open, onClose, onCreate }: AddUserDrawer
             onChange={(value) => setRole(value as Role)}
           />
           <Select
-            label={role === 'manager' ? 'Équipe gérée' : 'Équipe (facultatif)'}
+            label={role === 'manager' ? 'Équipe gérée' : 'Équipe'}
             name="team_id"
             options={TEAM_OPTIONS}
-            required={role === 'manager'}
+            required
           />
 
           <fieldset className="add-user-section">

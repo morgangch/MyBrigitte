@@ -1,0 +1,17 @@
+.add-team-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.add-team-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-team-hint {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
