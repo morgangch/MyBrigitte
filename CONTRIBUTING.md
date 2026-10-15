@@ -65,6 +65,15 @@ make audit       # RustSec and Bun audits
 make check       # Complete local gate
 ```
 
+On Windows 10/11, run these commands in Git Bash (or WSL) with Docker Desktop
+using Linux containers. `.gitattributes` keeps shell scripts and hooks in LF,
+even with `core.autocrlf=true`. For an existing checkout with CRLF scripts,
+first preserve any local edits, then refresh the affected files:
+
+```bash
+git restore --worktree -- .githooks scripts/*.sh dev/checks/entrypoint.sh dev/seed/run.sh
+```
+
 Hook installation changes only this clone's `core.hooksPath` and refuses to
 replace custom hooks. Pre-commit selects components from the staged diff and
 checks the exact index snapshot, including partial commits. It checks Rust
