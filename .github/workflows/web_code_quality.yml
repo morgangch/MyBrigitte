@@ -10,14 +10,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Detect initialized client
         id: client
         run: echo "ready=$(test -f web/package.json && echo true || echo false)" >> "$GITHUB_OUTPUT"
       - name: Report placeholder
         if: steps.client.outputs.ready != 'true'
         run: echo "web/ is a placeholder; initialize the client to enable checks." >> "$GITHUB_STEP_SUMMARY"
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         if: steps.client.outputs.ready == 'true'
         with:
           bun-version: '1.4.2'
