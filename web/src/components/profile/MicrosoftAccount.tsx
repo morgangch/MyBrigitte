@@ -1,5 +1,4 @@
-import Badge from '../ui/Badge.tsx'
-import Button from '../ui/Button.tsx'
+import { Badge, Button } from '../ui'
 import microsoftLogo from '../../assets/microsoft.svg'
 import './MicrosoftAccount.css'
 

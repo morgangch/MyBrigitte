@@ -1,7 +1,5 @@
 import { RotateCcw, Search } from 'lucide-react'
-import Button from '../ui/Button.tsx'
-import Input from '../ui/Input.tsx'
-import Select from '../ui/Select.tsx'
+import { Button, Input, Select } from '../ui'
 import { TEAMS } from '../../lib/fakeData.ts'
 import { TODAY_STATUS_LABELS } from '../../lib/labels.ts'
 import { EMPTY_FILTERS, hasActiveFilters, type UserFilters } from '../../lib/userFilters.ts'
@@ -47,6 +45,7 @@ export default function UsersFilters({ filters, onChange }: UsersFiltersProps) {
       />
       <Button
         className="users-filters-reset"
+        aria-label="Réinitialiser les filtres"
         onClick={() => onChange(EMPTY_FILTERS)}
         disabled={!hasActiveFilters(filters)}
       >
