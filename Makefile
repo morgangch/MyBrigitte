@@ -3,6 +3,20 @@ PROD_COMPOSE = docker compose -p mybrigitte-prod --env-file .env -f docker-compo
 
 .PHONY: dev dev-down dev-seed dev-reset-db prod prod-down config
 
+.PHONY: hooks audit check check-quick
+
+hooks:
+	bash scripts/install-hooks.sh
+
+audit:
+	python3 scripts/check.py audit
+
+check:
+	python3 scripts/check.py full
+
+check-quick:
+	python3 scripts/check.py quick
+
 dev:
 	@test -f .env.dev || cp .env.dev.example .env.dev
 	$(DEV_COMPOSE) up --build --watch
