@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 import AppLayout from './layout/AppLayout.tsx'
+import ManagerRoute from './layout/ManagerRoute.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
 import EmployeePage from './pages/EmployeePage.tsx'
 import HistoryPage from './pages/HistoryPage.tsx'
@@ -25,11 +26,13 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
 
         {/* Management */}
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/users/:id" element={<EmployeePage />} />
-        <Route path="/teams" element={<TeamsPage />} />
-        <Route path="/teams/:id" element={<TeamDetailPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
+        <Route element={<ManagerRoute />}>
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/users/:id" element={<EmployeePage />} />
+          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/teams/:id" element={<TeamDetailPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+        </Route>
       </Route>
 
       {/* Toute autre URL : page 404 */}

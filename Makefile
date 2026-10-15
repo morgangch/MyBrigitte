@@ -9,13 +9,13 @@ hooks:
 	bash scripts/install-hooks.sh
 
 audit:
-	python3 scripts/check.py audit
+	bash scripts/check-docker.sh audit
 
 check:
-	python3 scripts/check.py full
+	bash scripts/check-docker.sh full
 
 check-quick:
-	python3 scripts/check.py quick
+	bash scripts/check-docker.sh quick
 
 dev:
 	@test -f .env.dev || cp .env.dev.example .env.dev

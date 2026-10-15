@@ -25,7 +25,7 @@ export default function ProfilePage() {
           title="Sécurité"
           description="Utilisez au moins 12 caractères. Ne réutilisez pas un mot de passe d'un autre site."
         >
-          <MicrosoftAccount email={ME.microsoft_email} />
+          <MicrosoftAccount email={ME.email} />
           <PasswordForm hasPassword={ME.has_password} />
         </ProfileSection>
 

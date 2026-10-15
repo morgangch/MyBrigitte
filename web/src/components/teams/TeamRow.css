@@ -1,0 +1,47 @@
+.team-row-name {
+  font-weight: 500;
+}
+
+.team-row-description {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.team-row-managers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-row-manager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-row-hours {
+  font-weight: 600;
+}
+
+.team-row-punctuality {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.team-row-punctuality .progress {
+  width: 80px;
+}
+
+.team-row-action {
+  text-align: right;
+}
+
+.team-row-action a {
+  display: inline-flex;
+  color: var(--color-text-secondary);
+}
