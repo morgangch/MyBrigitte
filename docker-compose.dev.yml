@@ -1,5 +1,18 @@
 name: mybrigitte-dev
+
+# Migrate and backend share one debug image and one incremental target volume:
+# migrate compiles first, the backend then starts without rebuilding anything.
+x-backend-dev: &backend-dev
+  image: mybrigitte-backend-dev:local
+  build:
+    dockerfile: backend/Dockerfile.dev
+  volumes:
+    - backend_target:/app/target
+
 services:
+  migrate:
+    <<: *backend-dev
+    command: [sh, -c, 'cargo build --locked -p backend -p migration && exec target/debug/migration up']
   seed:
     logging:
       driver: local
@@ -24,16 +37,11 @@ services:
         condition: service_completed_successfully
     restart: 'no'
   backend:
+    <<: *backend-dev
     depends_on:
       seed:
         condition: service_completed_successfully
     read_only: false
-    image: mybrigitte-backend-dev:local
-    build:
-      dockerfile: backend/Dockerfile.dev
-    volumes:
-      - cargo_cache:/usr/local/cargo/registry
-      - backend_target:/app/target
     develop:
       watch:
         - action: sync+restart
@@ -48,8 +56,11 @@ services:
         - action: rebuild
           path: ./migration
     healthcheck:
-      start_period: 180s
+      # Only the first start after a dependency change compiles anything.
+      start_period: 600s
   web:
+    # Vite needs no API at startup: start it while the backend compiles.
+    depends_on: !reset {}
     image: mybrigitte-web-dev:local
     build:
       dockerfile: Dockerfile.dev
@@ -69,6 +80,5 @@ services:
         object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
 
 volumes:
-  cargo_cache:
   backend_target:
   web_modules:
