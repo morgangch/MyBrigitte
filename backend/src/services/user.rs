@@ -32,7 +32,7 @@ pub struct UpdateUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
-    pub phone_number: Option<String>,
+    pub phone_number: Option<Option<String>>,
     pub password: Option<String>,
     pub role: Option<Role>,
 }
@@ -52,7 +52,7 @@ pub async fn update(
     if let Some(email) = &input.email {
         check_email(&mut fields, email.trim());
     }
-    if let Some(phone_number) = &input.phone_number {
+    if let Some(Some(phone_number)) = &input.phone_number {
         check_phone(&mut fields, phone_number.trim());
     }
     reject_invalid_fields(fields)?;
@@ -69,8 +69,14 @@ pub async fn update(
     if let Some(email) = input.email {
         active_model.email = Set(email.trim().to_string());
     }
-    if let Some(phone_number) = input.phone_number {
-        active_model.phone_number = Set(Some(phone_number.trim().to_string()));
+    match input.phone_number {
+        Some(Some(phone_number)) => {
+            active_model.phone_number = Set(Some(phone_number.trim().to_string()));
+        }
+        Some(None) => {
+            active_model.phone_number = Set(None);
+        }
+        None => {}
     }
     if let Some(password) = input.password {
         let password_hash =

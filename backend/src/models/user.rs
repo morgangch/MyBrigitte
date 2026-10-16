@@ -1,7 +1,15 @@
 use sea_orm::entity::prelude::{DateTimeWithTimeZone, Uuid};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::entity::user::{self, Model};
+
+fn deserialize_optional_phone<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let phone = Option::<String>::deserialize(deserializer)?;
+    Ok(Some(phone))
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -38,7 +46,8 @@ pub struct UpdateUserRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
-    pub phone_number: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_phone")]
+    pub phone_number: Option<Option<String>>,
     pub password: Option<String>,
     pub role: Option<UserRole>,
 }
