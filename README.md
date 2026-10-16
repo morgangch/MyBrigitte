@@ -149,6 +149,13 @@ Vite also retains its API proxy for development outside Docker. The
 browser needs only the web origin. No CORS configuration or Compose DNS names
 are needed in browser code. SPA routes fall back to `index.html`.
 
+For API clients (curl, Postman, Bruno), the development proxy also serves the raw
+API on the backend port, without the `/api` prefix or rate limit:
+`http://localhost:3001/health`, `http://localhost:3001/users`, and so on (`PORT`
+and `WEB_BIND_ADDRESS` in `.env.dev`). It has no CORS headers, so browser code
+keeps using `/api`. The backend container itself publishes no port, and the
+production proxy serves only the web port.
+
 Proxy, web and backend share `application`; only backend, migrator and PostgreSQL join
 the internal `database` network. PostgreSQL, backend and web publish no host ports.
 Startup waits for PostgreSQL readiness, then a successful `migration up`, then

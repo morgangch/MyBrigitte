@@ -150,9 +150,9 @@ def env_value(compose, key, default):
     return default
 
 
-def app_url(compose):
+def app_url(compose, port_key="WEB_PORT", default_port="80"):
     host = env_value(compose, "WEB_BIND_ADDRESS", "127.0.0.1")
-    port = env_value(compose, "WEB_PORT", "80")
+    port = env_value(compose, port_key, default_port)
     host = "localhost" if host in ("127.0.0.1", "0.0.0.0", "") else host
     return f"http://{host}" + ("" if port == "80" else f":{port}")
 
@@ -514,6 +514,7 @@ def summary(compose, mode, detach, started):
         "",
         style(f"{GLYPHS['done']} MyBrigitte {mode} is ready", "1;32") + dim(f" in {clock(time.monotonic() - started)}"),
         f"  {dim('App ')}  {style(url, '4;36')}",
+        *([f"  {dim('API ')}  {style(app_url(compose, 'PORT', '3001'), '4;36')} {dim('(raw backend routes, e.g. /health)')}"] if mode == "dev" else []),
         f"  {dim('Logs')}  make {logs} {dim(f'(or make {logs} s=backend)')}",
     ]
     if mode == "dev" and not detach:

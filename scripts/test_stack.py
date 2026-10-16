@@ -127,6 +127,7 @@ class HelperTests(unittest.TestCase):
             compose = ["docker", "compose", "--env-file", str(env), "-f", "docker-compose.yml"]
             with mock.patch.dict(os.environ, {}, clear=True):
                 self.assertEqual(STACK.app_url(compose), "http://localhost:5173")
+                self.assertEqual(STACK.app_url(compose, "PORT", "3001"), "http://localhost:3001")
             with mock.patch.dict(os.environ, {"WEB_PORT": "80", "WEB_BIND_ADDRESS": "10.0.0.2"}, clear=True):
                 self.assertEqual(STACK.app_url(compose), "http://10.0.0.2")
 
