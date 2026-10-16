@@ -22,7 +22,7 @@ pub async fn login(
         .filter(Expr::cust_with_values("lower(email) = lower($1)", [email]))
         .one(db)
         .await
-        .map_err(|_| ApiError::InternalError)?
+        .map_err(ApiError::from_db)?
         .ok_or(ApiError::Unauthorized)?;
 
     let hash = user
@@ -35,7 +35,7 @@ pub async fn login(
     }
 
     let access_token =
-        create_token(&user.id.to_string(), jwt_secret).map_err(|_| ApiError::InternalError)?;
+        create_token(&user.id.to_string(), jwt_secret).map_err(|_| ApiError::Internal)?;
     let refresh_token = auth_session::create_session(db, user.id).await?;
 
     Ok(LoginTokens {

@@ -19,7 +19,7 @@ pub async fn create_session(db: &DatabaseConnection, user_id: Uuid) -> Result<St
     }
     .insert(db)
     .await
-    .map_err(|_| ApiError::InternalError)?;
+    .map_err(ApiError::from_db)?;
 
     Ok(token)
 }
