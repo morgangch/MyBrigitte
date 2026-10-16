@@ -168,8 +168,8 @@ ChangePassword = { current_password?: string, new_password: string }  // current
 
 NewUser = {
   first_name: string, last_name: string, email: string, phone_number: string | null,
-  team_id: uuid, role: Role, work_policy: NewWorkPolicy
-}  // users + team_members + user_work_policies (+ work_schedules) en une transaction
+  team_id: uuid, role?: Role, work_policy: NewWorkPolicy
+}  // role omis → employee. users + team_members + user_work_policies (+ work_schedules) en une transaction
 UpdateUser = {
   first_name?: string, last_name?: string, email?: string, phone_number?: string | null,
   role?: Role, team_id?: uuid, is_active?: boolean

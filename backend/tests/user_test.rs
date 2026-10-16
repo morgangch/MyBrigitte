@@ -1,28 +1,34 @@
 mod common;
 
-use axum::http::StatusCode;
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
+use http_body_util::BodyExt;
+use serde_json::Value;
+use tower::ServiceExt;
 
 #[tokio::test]
-async fn test_get_user_returns_user() {
-    let (status, json) = common::get_json("/users/1").await;
+async fn create_user_rejects_a_body_without_first_name() {
+    let request = Request::builder()
+        .method("POST")
+        .uri("/users")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"email":"ada@x.com"}"#))
+        .unwrap();
 
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(json["id"], 1);
-    assert_eq!(json["name"], "User");
-}
+    let response = backend::create_app()
+        .with_state(backend::AppState::disconnect(
+            common::TEST_SECRET.to_string(),
+        ))
+        .oneshot(request)
+        .await
+        .unwrap();
 
-#[tokio::test]
-async fn test_get_user_returns_not_found() {
-    let (status, json) = common::get_json("/users/101").await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
-    assert_eq!(status, StatusCode::NOT_FOUND);
-    assert_eq!(json["error"], "Data not found");
-}
-
-#[tokio::test]
-async fn test_list_users_returns_internal_error() {
-    let (status, json) = common::get_json("/users").await;
-
-    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
-    assert_eq!(json["error"], "Internal server error");
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let json: Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(json["error"]["code"], "validation_failed");
+    assert!(json["error"]["fields"]["body"].is_string());
 }
