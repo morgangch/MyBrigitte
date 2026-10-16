@@ -22,8 +22,9 @@ dev up -d --build --wait --wait-timeout 600
 for port in "$dev_port" "$prod_port"; do
   curl --fail --silent --show-error "http://127.0.0.1:$port/" >/dev/null
   curl --fail --silent --show-error "http://127.0.0.1:$port/dashboard" >/dev/null
+  # The browser reaches the API through the web origin: health, then a DB-backed route.
   curl --fail --silent --show-error "http://127.0.0.1:$port/api/health" | python3 -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ok"'
-  curl --fail --silent --show-error "http://127.0.0.1:$port/api/users/1" >/dev/null
+  curl --fail --silent --show-error "http://127.0.0.1:$port/api/users" >/dev/null
 done
 # Seed contains the frontend fixture records and can be replayed without duplicates.
 check_seed() {
