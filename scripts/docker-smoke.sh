@@ -28,8 +28,8 @@ done
 # Seed contains the frontend fixture records and can be replayed without duplicates.
 check_seed() {
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM users;')" = 9
-  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM teams;')" = 5
-  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM team_members;')" = 8
+  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM teams;')" = 6
+  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM team_members;')" = 9
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_sessions;')" = 7
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_schedules;')" = 5
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_sessions WHERE end_time IS NULL;')" = 1
