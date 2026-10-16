@@ -45,6 +45,9 @@ services:
         condition: service_healthy
 
   backend:
+    # The API is PID 1 without signal handlers: tini turns SIGTERM into an
+    # immediate stop instead of the 10s kill timeout on every restart.
+    init: true
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
