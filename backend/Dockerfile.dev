@@ -1,9 +1,21 @@
+# Toolchain, dependency sources and workspace sources only: compilation happens
+# at runtime in the cached target volume, so source edits never invalidate a
+# dependency build.
 FROM rust:1.99-bookworm
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Fetch with stub targets so this layer changes only with the manifests.
 COPY Cargo.toml Cargo.lock ./
+COPY backend/Cargo.toml backend/Cargo.toml
+COPY migration/Cargo.toml migration/Cargo.toml
+RUN mkdir -p backend/src migration/src \
+    && touch backend/src/main.rs migration/src/lib.rs migration/src/main.rs \
+    && cargo fetch --locked
 COPY backend ./backend
 COPY migration ./migration
-RUN cargo build --locked -p backend
+# Migrate only reaches the internal database network: never touch the registry
+# at runtime. Debug info dominates dev link time; line tables keep backtraces.
+ENV CARGO_NET_OFFLINE=true CARGO_PROFILE_DEV_DEBUG=line-tables-only
 EXPOSE 3001
-CMD ["cargo", "run", "--locked", "-p", "backend"]
+# Build both binaries together so migrate and backend share one feature set
+# (and therefore one set of compiled dependencies) in the target volume.
+CMD ["sh", "-c", "cargo build --locked -p backend -p migration && exec target/debug/backend"]
