@@ -13,9 +13,18 @@ Run all commands from this directory. The default stack is **production**:
 `docker compose up` reads the root `.env` and uses production runtime images.
 See the production setup below. Development requires its explicit override.
 
-`make dev` creates `.env.dev` from its example if absent and starts development
-with hot reload. `make dev-down` stops it while preserving data.
-`make prod` uses the production `.env`; `make prod-down` preserves its data.
+`make` lists every target. `make dev` creates `.env.dev` from its example if
+absent, builds and starts development, then follows the backend and web logs with
+hot reload (Ctrl+C stops it, `make dev-up` starts it in the background instead).
+`make dev-down` stops it while preserving data. `make prod` uses the production
+`.env`; `make prod-down` preserves its data. `make logs`, `make prod-logs`
+(`s=<service>` for one service), `make ps` and `make shell` help inspect them.
+
+On a terminal with Python 3.8+, `make dev`, `make dev-up` and `make prod` show
+progress bars for the image builds (including Rust crates compiled) and a startup
+checklist of every service. Crate estimates are remembered in
+`~/.cache/mybrigitte/stack-stats.json`. Without Python, outside a terminal, in CI
+or with `PLAIN=1`, they print Compose's own output.
 
 Copy the development configuration:
 
@@ -47,7 +56,8 @@ container runs `bun install --frozen-lockfile` on start, so after changing
 
 Production images keep the Cargo registry/target and Bun download caches in
 BuildKit cache mounts: a source edit recompiles only the workspace crates.
-`docker builder prune` drops these caches along with the rest of the build cache.
+`docker builder prune` drops these caches along with the rest of the build cache;
+`make prune` drops only build cache unused for 7 days.
 
 ## Disposable development fixtures
 
