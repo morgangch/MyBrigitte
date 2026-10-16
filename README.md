@@ -7,7 +7,8 @@ its `/api` proxy is ready for API integration. Microsoft OAuth is planned.
 
 ## Docker development
 
-Requires Docker Engine with Compose 2.24+ (Compose Watch `sync+restart`, `!reset`).
+Requires Docker Engine 25+ with Compose 2.24+ (Compose Watch `sync+restart`,
+`!reset`, healthcheck `start_interval`).
 Run all commands from this directory. The default stack is **production**:
 `docker compose up` reads the root `.env` and uses production runtime images.
 See the production setup below. Development requires its explicit override.
