@@ -16,9 +16,10 @@ where
     Ok(Some(phone))
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
+    #[default]
     Employee,
     Manager,
 }
@@ -66,12 +67,6 @@ pub struct UpdateUserRequest {
     pub phone_number: Option<Option<String>>,
     pub password: Option<String>,
     pub role: Option<UserRole>,
-}
-
-impl Default for UserRole {
-    fn default() -> Self {
-        Self::Employee
-    }
 }
 
 impl From<user::Role> for UserRole {
