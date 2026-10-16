@@ -7,7 +7,10 @@ use sea_orm::{
 };
 use std::collections::HashMap;
 
-// Delete (Deactivate to not break the KPIs)
+/// Sets `is_active` to false and keeps the row.
+///
+/// Clock entries and other tables reference the user, so a SQL `DELETE` would fail or drop history.
+/// HTTP `DELETE /users/{id}` calls this function.
 pub async fn deactivate(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiError> {
     let model = find_by_id(db, id).await?;
     let mut active_model = model.into_active_model();
@@ -18,6 +21,7 @@ pub async fn deactivate(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
     active_model.update(db).await.map_err(ApiError::from_db)
 }
 
+/// Removes the row with SQL `DELETE`. The HTTP route does not call this; it calls [`deactivate`].
 pub async fn delete(db: &DatabaseConnection, id: Uuid) -> Result<(), ApiError> {
     let result = user::Entity::delete_by_id(id)
         .exec(db)
@@ -31,15 +35,23 @@ pub async fn delete(db: &DatabaseConnection, id: Uuid) -> Result<(), ApiError> {
     Ok(())
 }
 
+/// Partial update. `None` on a field means the client omitted it, so the column stays as it is.
+///
+/// `phone_number` has a third state because JSON `null` must clear the column:
+/// `None` leaves it unchanged, `Some(None)` writes SQL `NULL`, `Some(Some(value))` replaces it.
 pub struct UpdateUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
+    /// See the struct comment for the three states.
     pub phone_number: Option<Option<String>>,
     pub password: Option<String>,
     pub role: Option<Role>,
 }
 
+/// Applies the fields the client sent. Omitted fields are not written.
+///
+/// Checks run before the row is loaded, and the stored text is the trimmed text.
 pub async fn update(
     db: &DatabaseConnection,
     id: Uuid,
@@ -94,7 +106,7 @@ pub async fn update(
     active_model.update(db).await.map_err(ApiError::from_db)
 }
 
-// Create
+/// Values for an insert. `phone_number: None` is stored as SQL `NULL`.
 pub struct CreateUser {
     pub first_name: String,
     pub last_name: String,
@@ -104,6 +116,11 @@ pub struct CreateUser {
     pub role: Role,
 }
 
+/// Inserts an active user.
+///
+/// Names, email, and phone are checked before hashing and SQL. A blank email is then
+/// `validation_failed` (400) instead of the `users_email_not_blank` check failing as 500.
+/// Stored strings are the trimmed ones.
 pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model, ApiError> {
     let first_name = input.first_name.trim();
     let last_name = input.last_name.trim();
@@ -113,7 +130,7 @@ pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model,
     check_name(&mut fields, "last_name", last_name);
     check_email(&mut fields, email);
 
-    // Check of Phone only if it's here
+    // An omitted phone is NULL, not an invalid value.
     if let Some(phone_number) = &input.phone_number {
         check_phone(&mut fields, phone_number.trim());
     }
@@ -142,7 +159,6 @@ pub async fn create(db: &DatabaseConnection, input: CreateUser) -> Result<Model,
     active_model.insert(db).await.map_err(ApiError::from_db)
 }
 
-// Read
 pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiError> {
     user::Entity::find_by_id(id)
         .one(db)
@@ -153,9 +169,13 @@ pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
 
 pub struct ListedUsers {
     pub items: Vec<Model>,
+    /// How many rows match the filter, including those outside this page.
     pub total: u64,
 }
 
+/// One page of users with the same `is_active` value, ordered by last name, first name, then id.
+///
+/// The sort keeps page 2 the continuation of page 1. `limit` and `offset` are applied only to `items`.
 pub async fn find_page(
     db: &DatabaseConnection,
     limit: u64,
@@ -179,7 +199,7 @@ pub async fn find_page(
     Ok(ListedUsers { items, total })
 }
 
-// Validation
+/// Turns a non-empty field map into `validation_failed`. An empty map means the input passed.
 fn reject_invalid_fields(fields: HashMap<String, String>) -> Result<(), ApiError> {
     if fields.is_empty() {
         Ok(())
@@ -188,6 +208,7 @@ fn reject_invalid_fields(fields: HashMap<String, String>) -> Result<(), ApiError
     }
 }
 
+/// One `@`, a non-empty local part, and a domain that contains a dot but does not start or end with one.
 fn email_valid_format(email: &str) -> bool {
     let mut parts = email.split('@');
     match (parts.next(), parts.next(), parts.next()) {
@@ -201,6 +222,7 @@ fn email_valid_format(email: &str) -> bool {
     }
 }
 
+/// Records `required` or `too long`. `value` must already be trimmed. Names are limited to 100 characters.
 fn check_name(fields: &mut HashMap<String, String>, key: &str, value: &str) {
     if value.is_empty() {
         fields.insert(key.to_string(), "required".to_string());
@@ -209,7 +231,7 @@ fn check_name(fields: &mut HashMap<String, String>, key: &str, value: &str) {
     }
 }
 
-/// Check if the email is well formed
+/// Records `required`, `too long`, or `invalid format`. `email` must already be trimmed. The column allows 254 characters.
 fn check_email(fields: &mut HashMap<String, String>, email: &str) {
     if email.is_empty() {
         fields.insert("email".to_string(), "required".to_string());
@@ -220,6 +242,9 @@ fn check_email(fields: &mut HashMap<String, String>, email: &str) {
     }
 }
 
+/// Records `required` or `too long`. `phone` must already be trimmed. The column allows 20 characters.
+///
+/// Do not call this for a missing phone: absence is SQL `NULL`, not an error.
 fn check_phone(fields: &mut HashMap<String, String>, phone: &str) {
     if phone.is_empty() {
         fields.insert("phone_number".to_string(), "required".to_string());

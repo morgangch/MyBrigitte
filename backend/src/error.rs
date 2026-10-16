@@ -86,6 +86,9 @@ impl IntoResponse for ApiError {
     }
 }
 
+/// Maps Axum's plain-text JSON rejection to the `{ "error": { code, message, fields } }` envelope.
+///
+/// Without this, a broken body never reaches the handler and the client cannot read `error.code`.
 impl From<JsonRejection> for ApiError {
     fn from(rejection: JsonRejection) -> Self {
         let mut fields = HashMap::new();

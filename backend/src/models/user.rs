@@ -3,6 +3,11 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::entity::user::{self, Model};
 
+/// Distinguishes a missing `phone_number` key from JSON `null`.
+///
+/// A plain `Option<String>` collapses both to `None`. This wraps the parsed value in `Some`,
+/// so `null` becomes `Some(None)` and a string becomes `Some(Some(value))`.
+/// A missing key never calls this function: `#[serde(default)]` supplies `None`.
 fn deserialize_optional_phone<'de, D>(deserializer: D) -> Result<Option<Option<String>>, D::Error>
 where
     D: Deserializer<'de>,
@@ -19,6 +24,7 @@ pub enum UserRole {
 }
 
 #[derive(Debug, Clone, Serialize)]
+/// User returned by the API. `password_hash` is not part of this struct.
 pub struct UserResponse {
     pub id: Uuid,
     pub first_name: String,
@@ -38,10 +44,13 @@ pub struct CreateUserRequest {
     pub email: String,
     pub phone_number: Option<String>,
     pub password: Option<String>,
+    /// Missing key becomes `employee`. JSON `null` is still rejected.
+    #[serde(default)]
     pub role: UserRole,
 }
 
 #[derive(Debug, Deserialize)]
+/// Query string of `GET /users`. Absent fields are filled in by [`crate::handlers::user::list_users`].
 pub struct ListUsersQuery {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
@@ -57,6 +66,12 @@ pub struct UpdateUserRequest {
     pub phone_number: Option<Option<String>>,
     pub password: Option<String>,
     pub role: Option<UserRole>,
+}
+
+impl Default for UserRole {
+    fn default() -> Self {
+        Self::Employee
+    }
 }
 
 impl From<user::Role> for UserRole {
@@ -90,5 +105,28 @@ impl From<Model> for UserResponse {
             created_at: model.created_at,
             updated_at: model.updated_at,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_user_without_role_defaults_to_employee() {
+        let parsed: CreateUserRequest = serde_json::from_str(
+            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com"}"#,
+        )
+        .unwrap();
+        assert_eq!(parsed.role, UserRole::Employee);
+    }
+
+    #[test]
+    fn create_user_keeps_an_explicit_manager_role() {
+        let parsed: CreateUserRequest = serde_json::from_str(
+            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com","role":"manager"}"#,
+        )
+        .unwrap();
+        assert_eq!(parsed.role, UserRole::Manager);
     }
 }

@@ -14,6 +14,7 @@ pub async fn me(user: AuthUser) -> Json<Value> {
     Json(json!({ "user_id": user.user_id }))
 }
 
+/// `POST /auth/login`. An unreadable body becomes `validation_failed`, like the user handlers.
 pub async fn login(
     State(state): State<AppState>,
     body: Result<Json<LoginRequest>, JsonRejection>,

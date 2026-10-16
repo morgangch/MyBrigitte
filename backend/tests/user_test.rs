@@ -9,12 +9,12 @@ use serde_json::Value;
 use tower::ServiceExt;
 
 #[tokio::test]
-async fn create_user_rejects_a_body_without_role() {
+async fn create_user_rejects_a_body_without_first_name() {
     let request = Request::builder()
         .method("POST")
         .uri("/users")
         .header("content-type", "application/json")
-        .body(Body::from(r#"{"first_name":"Ada"}"#))
+        .body(Body::from(r#"{"email":"ada@x.com"}"#))
         .unwrap();
 
     let response = backend::create_app()
