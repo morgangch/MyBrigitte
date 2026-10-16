@@ -2,12 +2,10 @@ use chrono::{Duration, Utc};
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, DatabaseConnection, prelude::Uuid};
 
 use crate::{
-    auth::refresh::{generate_refresh_token, hash_refresh_token},
+    auth::refresh::{REFRESH_TOKEN_DURATION_DAYS, generate_refresh_token, hash_refresh_token},
     entity::auth_session,
     error::ApiError,
 };
-
-const REFRESH_TOKEN_DURATION_DAYS: i64 = 7;
 
 pub async fn create_session(db: &DatabaseConnection, user_id: Uuid) -> Result<String, ApiError> {
     let token = generate_refresh_token();

@@ -1,8 +1,18 @@
-use axum::{Json, extract::State, extract::rejection::JsonRejection};
+use axum::{
+    Json,
+    extract::{State, rejection::JsonRejection},
+    http::header::SET_COOKIE,
+    response::IntoResponse,
+};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use crate::{AppState, auth::extractor::AuthUser, error::ApiError, services::auth as auth_service};
+use crate::{
+    AppState,
+    auth::{cookie::refresh_cookie, extractor::AuthUser},
+    error::ApiError,
+    services::auth as auth_service,
+};
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -18,9 +28,12 @@ pub async fn me(user: AuthUser) -> Json<Value> {
 pub async fn login(
     State(state): State<AppState>,
     body: Result<Json<LoginRequest>, JsonRejection>,
-) -> Result<Json<Value>, ApiError> {
+) -> Result<impl IntoResponse, ApiError> {
     let Json(body) = body?;
-    let token =
+    let tokens =
         auth_service::login(&state.db, &body.email, &body.password, &state.jwt_secret).await?;
-    Ok(Json(json!({ "access_token": token })))
+    Ok((
+        [(SET_COOKIE, refresh_cookie(&tokens.refresh_token))],
+        Json(json!({ "access_token": tokens.access_token })),
+    ))
 }
