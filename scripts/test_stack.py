@@ -141,11 +141,47 @@ class HelperTests(unittest.TestCase):
 
     def test_plain_mode_keeps_the_original_compose_commands(self):
         compose = ["docker", "compose", "-p", "x"]
-        with mock.patch.object(STACK.subprocess, "call", return_value=0) as call:
+        with mock.patch.object(STACK, "foreground", return_value=0) as run:
             STACK.plain("dev", False, compose)
             STACK.plain("prod", False, compose)
-        self.assertEqual(call.call_args_list[0].args[0], [*compose, "up", "--build", "--watch"])
-        self.assertEqual(call.call_args_list[1].args[0][:6], [*compose, "up", "--detach"])
+        self.assertEqual(run.call_args_list[0].args[0], [*compose, "up", "--build", "--watch"])
+        self.assertEqual(run.call_args_list[1].args[0][:6], [*compose, "up", "--detach"])
+
+    def test_ctrl_c_waits_for_compose_to_stop_instead_of_killing_it(self):
+        process = mock.Mock()
+        process.wait.side_effect = [KeyboardInterrupt, KeyboardInterrupt, 0]
+        with mock.patch.object(STACK.subprocess, "Popen", return_value=process):
+            self.assertEqual(STACK.foreground(["docker", "compose", "up"]), 0)
+        process.kill.assert_not_called()
+        process.terminate.assert_not_called()
+
+    def test_ascii_glyphs_for_legacy_windows_consoles(self):
+        with mock.patch.object(STACK, "GLYPHS", STACK.ASCII):
+            for fraction in (0, 0.37, 1):
+                rendered = STACK.ANSI.sub("", STACK.bar(fraction, 20))
+                self.assertEqual(len(rendered), 20)
+                self.assertTrue(set(rendered) <= {"#", "-"})
+            counter = STACK.LineCounter()
+            counter.feed("   Compiling tokio v1.53.2\n")
+            tracker = STACK.UpTracker(["backend"], {"backend": 10})
+            tracker.rows["backend"] = {"Service": "backend", "State": "running", "Health": "starting"}
+            tracker.logs["backend"] = counter
+            self.assertEqual(tracker.status("backend"), ("run", "compiling 1/~10 - tokio"))
+        for glyphs in (STACK.UNICODE, STACK.ASCII):
+            self.assertEqual(set(glyphs), set(STACK.UNICODE))
+        self.assertTrue(all(ord(char) < 128 for value in STACK.ASCII.values() for char in value))
+
+    def test_help_lists_sections_and_documented_targets_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            makefile = Path(directory) / "Makefile"
+            makefile.write_text("##@ Development\n\ndev: .env.dev ## Start dev\n.env.dev:\n\t@cp a b\nhidden:\n", encoding="utf-8")
+            with mock.patch.object(STACK.sys, "stdout", io.StringIO()) as out:
+                self.assertEqual(STACK.main(["help", str(makefile)]), 0)
+        text = STACK.ANSI.sub("", out.getvalue())
+        self.assertIn("Development", text)
+        self.assertIn("dev            Start dev", text)
+        self.assertNotIn("hidden", text)
+        self.assertNotIn(".env.dev:", text)
 
     def test_usage_errors(self):
         with mock.patch.object(STACK.sys, "stderr", io.StringIO()):

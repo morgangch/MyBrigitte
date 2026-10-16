@@ -2,6 +2,7 @@
 """Progress UI for the Compose stacks: image builds, then a startup checklist.
 
 Usage: stack.py {dev,prod} [--detach] docker compose <global options...>
+       stack.py help <Makefile>
 
 The Makefile owns the Compose arguments; this only adds the presentation.
 Compose's own output is used unchanged off a terminal, in CI or with PLAIN=1.
@@ -24,10 +25,38 @@ STEP = re.compile(r"^\[(?:(?P<target>[\w.-]+) )?(?:(?P<stage>[\w.-]+) )?(?P<step
 COMPILING = re.compile(r"^\s*Compiling (?P<crate>\S+)")
 MOUNT = re.compile(r"--mount=\S+")
 ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
-SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-PARTIAL = " ▏▎▍▌▋▊▉"
 WAIT_TIMEOUT = 900
 COLOR = "NO_COLOR" not in os.environ
+UNICODE = {
+    "spinner": "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏", "partial": " ▏▎▍▌▋▊▉", "full": "█", "empty": "░",
+    "done": "✔", "fail": "✘", "wait": "·", "about": "≈", "dot": "·",
+}
+# Legacy Windows console fonts lack Braille, eighth blocks and check marks.
+ASCII = {
+    "spinner": "|/-\\", "partial": " ", "full": "#", "empty": "-",
+    "done": "+", "fail": "x", "wait": ".", "about": "~", "dot": "-",
+}
+
+
+def fancy_terminal():
+    return os.name != "nt" or "WT_SESSION" in os.environ or os.environ.get("TERM_PROGRAM") == "vscode"
+
+
+GLYPHS = UNICODE if fancy_terminal() else ASCII
+
+
+def enable_vt():
+    """Turns on escape sequences in Windows consoles; False where unsupported."""
+    if os.name != "nt":
+        return True
+    import ctypes
+
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-11)
+    mode = ctypes.c_uint32()
+    if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+        return False
+    return bool(mode.value & 0x4 or kernel32.SetConsoleMode(handle, mode.value | 0x4))
 
 
 def style(text, code):
@@ -59,9 +88,10 @@ def bar(fraction, width=30):
     fraction = min(max(fraction, 0.0), 1.0)
     cells = fraction * width
     full = int(cells)
-    partial = PARTIAL[int((cells - full) * len(PARTIAL))] if full < width else ""
-    filled = "█" * full + partial.strip()
-    return style(filled, "36") + dim("░" * (width - len(filled)))
+    partial = GLYPHS["partial"]
+    tip = partial[int((cells - full) * len(partial))].strip() if full < width else ""
+    filled = GLYPHS["full"] * full + tip
+    return style(filled, "36") + dim(GLYPHS["empty"] * (width - len(filled)))
 
 
 def clock(seconds):
@@ -70,13 +100,16 @@ def clock(seconds):
 
 
 def stats_path():
-    base = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local"
+    else:
+        base = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
     return Path(base) / "mybrigitte" / "stack-stats.json"
 
 
 def load_stats():
     try:
-        return json.loads(stats_path().read_text())
+        return json.loads(stats_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -84,7 +117,7 @@ def load_stats():
 def save_stats(stats):
     try:
         stats_path().parent.mkdir(parents=True, exist_ok=True)
-        stats_path().write_text(json.dumps(stats, indent=2, sort_keys=True))
+        stats_path().write_text(json.dumps(stats, indent=2, sort_keys=True), encoding="utf-8")
     except OSError:
         pass
 
@@ -97,7 +130,7 @@ def remember_crates(stats, key, compiled, fallback):
 
 def default_crates():
     try:
-        return (ROOT / "Cargo.lock").read_text().count("[[package]]")
+        return (ROOT / "Cargo.lock").read_text(encoding="utf-8").count("[[package]]")
     except OSError:
         return 300
 
@@ -107,7 +140,7 @@ def env_value(compose, key, default):
         return os.environ[key]
     path = next((compose[i + 1] for i, arg in enumerate(compose[:-1]) if arg == "--env-file"), None)
     try:
-        lines = Path(path).read_text().splitlines() if path else []
+        lines = Path(path).read_text(encoding="utf-8").splitlines() if path else []
     except OSError:
         lines = []
     for line in lines:
@@ -233,7 +266,7 @@ class BuildTracker:
                 counter = self.logs.get(digest)
                 if counter and counter.compiled and "cargo build" in vertex["command"]:
                     expected = max(self.estimate(target), counter.compiled)
-                    result.append((target, "run", f"compiling {counter.compiled}/≈{expected} · {counter.crate}"))
+                    result.append((target, "run", f"compiling {counter.compiled}/{GLYPHS['about']}{expected} {GLYPHS['dot']} {counter.crate}"))
                 else:
                     result.append((target, "run", vertex["command"]))
             else:
@@ -252,7 +285,7 @@ class BuildTracker:
         lines = []
         for digest, vertex in self.vertices.items():
             if vertex.get("error"):
-                lines.append(style(f"✘ {vertex.get('name', '')}", "31"))
+                lines.append(style(f"{GLYPHS['fail']} {vertex.get('name', '')}", "31"))
                 lines.extend(f"  {line}" for line in (self.logs.get(digest) or LineCounter()).tail)
                 lines.append(style(f"  {vertex['error']}", "31"))
         return lines + list(self.messages)
@@ -319,7 +352,7 @@ class UpTracker:
         counter = self.logs.get(service)
         if counter and counter.compiled:
             expected = max(self.expected.get(service, counter.compiled), counter.compiled)
-            return "run", f"compiling {counter.compiled}/≈{expected} · {counter.crate}"
+            return "run", f"compiling {counter.compiled}/{GLYPHS['about']}{expected} {GLYPHS['dot']} {counter.crate}"
         return "run", "starting" if health == "starting" else "running"
 
     def progress(self):
@@ -346,14 +379,14 @@ class Screen:
         self.tick = 0
 
     def spinner(self):
-        return SPINNER[self.tick % len(SPINNER)]
+        return GLYPHS["spinner"][self.tick % len(GLYPHS["spinner"])]
 
     def symbol(self, kind):
         return {
-            "done": style("✔", "32"),
-            "fail": style("✘", "31"),
+            "done": style(GLYPHS["done"], "32"),
+            "fail": style(GLYPHS["fail"], "31"),
             "run": style(self.spinner(), "33"),
-            "wait": dim("·"),
+            "wait": dim(GLYPHS["wait"]),
         }[kind]
 
     def draw(self, lines):
@@ -417,7 +450,7 @@ def render_build(screen, tracker, shown, started):
 
 
 def compose_ps(compose):
-    result = subprocess.run([*compose, "ps", "--all", "--format", "json"], capture_output=True, text=True)
+    result = subprocess.run([*compose, "ps", "--all", "--format", "json"], capture_output=True, text=True, encoding="utf-8", errors="replace")
     rows = []
     for line in result.stdout.splitlines():
         try:
@@ -429,7 +462,7 @@ def compose_ps(compose):
 
 
 def up_phase(screen, compose, mode, stats):
-    services = subprocess.run([*compose, "config", "--services"], capture_output=True, text=True, check=True).stdout.split()
+    services = subprocess.run([*compose, "config", "--services"], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True).stdout.split()
     expected = {service: stats.get(f"{mode}:run:{service}", default_crates()) for service in services}
     tracker = UpTracker(services, expected)
     output = deque(maxlen=30)
@@ -451,7 +484,7 @@ def up_phase(screen, compose, mode, stats):
             for service in services:
                 kind, detail = tracker.status(service)
                 if kind == "fail":
-                    print(style(f"\n✘ {service}: {detail}", "31"))
+                    print(style(f"\n{GLYPHS['fail']} {service}: {detail}", "31"))
                     print("\n".join(f"  {line}" for line in tracker.logs.get(service, LineCounter()).tail))
             print("\n".join(line.rstrip() for line in output))
             return process.returncode
@@ -479,7 +512,7 @@ def summary(compose, mode, detach, started):
     logs = "logs" if mode == "dev" else "prod-logs"
     lines = [
         "",
-        style(f"✔ MyBrigitte {mode} is ready", "1;32") + dim(f" in {clock(time.monotonic() - started)}"),
+        style(f"{GLYPHS['done']} MyBrigitte {mode} is ready", "1;32") + dim(f" in {clock(time.monotonic() - started)}"),
         f"  {dim('App ')}  {style(url, '4;36')}",
         f"  {dim('Logs')}  make {logs} {dim(f'(or make {logs} s=backend)')}",
     ]
@@ -491,12 +524,37 @@ def summary(compose, mode, detach, started):
     print("\n".join(lines))
 
 
+def foreground(command):
+    """Runs `command` to completion. Ctrl+C also reaches the child, which then
+    stops its containers gracefully: wait for it instead of killing it (as
+    subprocess.call would), and never exec, which Windows emulates by exiting."""
+    process = subprocess.Popen(command)
+    while True:
+        try:
+            return process.wait()
+        except KeyboardInterrupt:
+            continue
+
+
 def plain(mode, detach, compose):
     if mode == "dev" and not detach:
         command = [*compose, "up", "--build", "--watch"]
     else:
         command = [*compose, "up", "--detach", "--build", "--wait", "--wait-timeout", str(WAIT_TIMEOUT)]
-    return subprocess.call(command)
+    return foreground(command)
+
+
+def show_help(makefile):
+    """`make help` for shells without awk (cmd.exe and PowerShell)."""
+    enable_vt()
+    for line in Path(makefile).read_text(encoding="utf-8").splitlines():
+        if line.startswith("##@"):
+            print("\n" + style(line[3:].strip(), "1"))
+        elif re.match(r"^[a-z-]+:.*## ", line):
+            target, text = line.split(":", 1)[0], line.split("## ", 1)[1]
+            print(f"  {style(f'{target:<14}', '36')} {text}")
+    print("\nmake <target> PLAIN=1 shows the raw Compose output instead of progress bars.")
+    return 0
 
 
 def wants_plain():
@@ -504,20 +562,20 @@ def wants_plain():
 
 
 def main(argv):
+    if argv[:1] == ["help"] and len(argv) == 2:
+        return show_help(argv[1])
     if len(argv) < 2 or argv[0] not in ("dev", "prod"):
         print(__doc__, file=sys.stderr)
         return 2
     mode, rest = argv[0], argv[1:]
     detach = rest[:1] == ["--detach"]
     compose = rest[1:] if detach else rest
-    if wants_plain():
+    if wants_plain() or not enable_vt():
         return plain(mode, detach, compose)
-    if os.name == "nt":
-        os.system("")  # Enables VT escape sequences in legacy Windows consoles.
     stats = load_stats()
     screen = Screen()
     started = time.monotonic()
-    print(style(f"\n MyBrigitte · {mode} ", "1;7") + "\n")
+    print(style(f"\n MyBrigitte {GLYPHS['dot']} {mode} ", "1;7") + "\n")
     sys.stdout.write("\x1b[?25l")
     try:
         code = build_phase(screen, compose, mode, stats) or up_phase(screen, compose, mode, stats)
@@ -529,14 +587,12 @@ def main(argv):
         sys.stdout.flush()
         save_stats(stats)
     if code:
-        print(style(f"\n✘ {mode} failed.", "1;31") + " Full Compose output: PLAIN=1 make " + mode)
+        print(style(f"\n{GLYPHS['fail']} {mode} failed.", "1;31") + f" Full Compose output: make {mode} PLAIN=1")
         return code
     summary(compose, mode, detach, started)
     if mode == "dev" and not detach:
         # Images are fresh, so this only attaches logs and starts Compose Watch.
-        command = [*compose, "up", "--watch", "--attach", "backend", "--attach", "web"]
-        sys.stdout.flush()
-        os.execvp(command[0], command)
+        return foreground([*compose, "up", "--watch", "--attach", "backend", "--attach", "web"])
     return 0
 
 

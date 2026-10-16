@@ -1,11 +1,30 @@
 DEV_COMPOSE = docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml
 PROD_COMPOSE = docker compose -p mybrigitte-prod --env-file .env -f docker-compose.yml
 
+# Recipes stay valid in both sh and cmd.exe. Native Windows make (from PowerShell
+# or cmd) always uses cmd.exe, whatever sh.exe happens to be in PATH.
+ifeq ($(OS)$(findstring msys,$(MAKE_HOST))$(findstring cygwin,$(MAKE_HOST)),Windows_NT)
+SHELL := cmd.exe
+NULL := NUL
+COPY := copy /Y
+GIT_EXEC := $(shell git --exec-path 2>NUL)
+# Git Bash, never the WSL launcher that `bash` may resolve to.
+BASH := $(if $(GIT_EXEC),"$(GIT_EXEC)/../../../bin/bash.exe",bash)
+else
+NULL := /dev/null
+COPY := cp
+BASH := bash
+endif
+
 # The progress UI needs Python 3.8+; without it (or with PLAIN=1) Compose prints its own output.
-PYTHON := $(shell python3 -c 'import sys; sys.exit(sys.version_info < (3, 8))' >/dev/null 2>&1 && echo python3)
+probe = $(shell $(1) -c "import sys; sys.exit(sys.version_info < (3, 8))" >$(NULL) 2>&1 && echo $(1))
+ifeq ($(NULL),NUL)
+PYTHON := $(or $(call probe,py),$(call probe,python),$(call probe,python3))
+else
+PYTHON := $(call probe,python3)
+endif
 # $(call stack,<mode and flags>,<compose>,<fallback up arguments>)
 stack = $(if $(PYTHON),$(PYTHON) scripts/stack.py $(1) $(2),$(2) $(3))
-say = printf '\033[1;36m▸\033[0m %s\n'
 
 s ?= backend
 export PLAIN
@@ -26,17 +45,16 @@ dev-down: ## Stop dev; data and build caches are kept
 	@$(DEV_COMPOSE) down
 
 dev-seed: .env.dev ## Apply migrations and replay fixtures without overwriting rows
-	@$(say) 'Building migrate and seed'
+	@echo Building migrate and seed
 	@$(DEV_COMPOSE) build --quiet migrate seed
-	@$(say) 'Applying migrations'
+	@echo Applying migrations
 	@$(DEV_COMPOSE) run --rm migrate
-	@$(say) 'Loading fixtures'
+	@echo Loading fixtures
 	@$(DEV_COMPOSE) run --rm seed
 
 dev-reset-db: .env.dev ## DELETE the dev database, then recreate and seed it
 	@$(DEV_COMPOSE) down
-	@if docker volume inspect mybrigitte-dev_postgres_data >/dev/null 2>&1; then \
-		$(say) 'Removing mybrigitte-dev_postgres_data'; docker volume rm mybrigitte-dev_postgres_data >/dev/null; fi
+	@docker volume rm mybrigitte-dev_postgres_data >$(NULL) 2>&1 && echo Removed the dev database volume || echo No dev database volume to remove
 	@$(call stack,dev --detach,$(DEV_COMPOSE),up -d --build --wait)
 
 logs: ## Follow dev logs (all services, or s=<service>)
@@ -46,16 +64,15 @@ shell: ## Open a shell in a running dev container (s=backend by default)
 	@$(DEV_COMPOSE) exec $(s) sh
 
 ps: ## Show dev and prod containers
-	@$(say) 'Development'
+	@echo Development:
 	@$(DEV_COMPOSE) ps --all
-	@echo
-	@$(say) 'Production'
+	@echo Production:
 	@$(PROD_COMPOSE) ps --all
 
 ##@ Production
 
 prod: ## Build and start production in the background
-	@test -f .env || { printf '\033[31m✘\033[0m Create .env from .env.example and configure production secrets first.\n'; exit 1; }
+	@$(if $(wildcard .env),,$(error Create .env from .env.example and configure production secrets first))
 	@$(call stack,prod,$(PROD_COMPOSE),up -d --build --wait)
 
 prod-down: ## Stop production; data is kept
@@ -67,19 +84,19 @@ prod-logs: ## Follow production logs (all services, or s=<service>)
 ##@ Quality
 
 hooks: ## Install the Git hooks
-	@bash scripts/install-hooks.sh
+	@$(BASH) scripts/install-hooks.sh
 
 check-quick: ## Fast checks in the Docker tooling image
-	@bash scripts/check-docker.sh quick
+	@$(BASH) scripts/check-docker.sh quick
 
 check: ## Complete local gate
-	@bash scripts/check-docker.sh full
+	@$(BASH) scripts/check-docker.sh full
 
 audit: ## RustSec and Bun audits
-	@bash scripts/check-docker.sh audit
+	@$(BASH) scripts/check-docker.sh audit
 
 config: ## Validate both Compose configurations
-	@$(DEV_COMPOSE) config --quiet && $(PROD_COMPOSE) config --quiet && $(say) 'Compose configurations are valid'
+	@$(DEV_COMPOSE) config --quiet && $(PROD_COMPOSE) config --quiet && echo Compose configurations are valid
 
 ##@ Maintenance
 
@@ -87,11 +104,15 @@ prune: ## Drop Docker build cache unused for 7 days (volumes are kept)
 	@docker builder prune --force --filter until=168h
 
 .env.dev:
-	@cp .env.dev.example .env.dev
-	@$(say) 'Created .env.dev from .env.dev.example'
+	@$(COPY) .env.dev.example .env.dev >$(NULL)
+	@echo Created .env.dev from .env.dev.example
 
 help: ## Show this help
+ifeq ($(NULL),NUL)
+	@$(if $(PYTHON),$(PYTHON) scripts/stack.py help Makefile,findstr /C:"##" Makefile)
+else
 	@awk 'BEGIN { FS = ":.*## " } \
 		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } \
 		/^[a-z-]+:.*## / { printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
-	@printf '\nPLAIN=1 shows the raw Compose output instead of progress bars.\n'
+	@printf '\nmake <target> PLAIN=1 shows the raw Compose output instead of progress bars.\n'
+endif

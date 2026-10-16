@@ -23,8 +23,16 @@ hot reload (Ctrl+C stops it, `make dev-up` starts it in the background instead).
 On a terminal with Python 3.8+, `make dev`, `make dev-up` and `make prod` show
 progress bars for the image builds (including Rust crates compiled) and a startup
 checklist of every service. Crate estimates are remembered in
-`~/.cache/mybrigitte/stack-stats.json`. Without Python, outside a terminal, in CI
-or with `PLAIN=1`, they print Compose's own output.
+`~/.cache/mybrigitte/stack-stats.json` (`%LOCALAPPDATA%\mybrigitte` on Windows).
+Without Python, outside a terminal, in CI or with `make <target> PLAIN=1`, they
+print Compose's own output.
+
+On Windows 10/11, the targets work from PowerShell, cmd or Git Bash with Docker
+Desktop (Linux containers) and GNU make, for example `winget install
+ezwinports.make`. Native Windows make runs recipes through cmd.exe and finds
+Python as `py`, `python` or `python3`; the quality targets (`hooks`, `check*`,
+`audit`) use Git Bash from Git for Windows. Outside Windows Terminal and the VS
+Code terminal, the progress UI uses ASCII symbols.
 
 Copy the development configuration:
 
