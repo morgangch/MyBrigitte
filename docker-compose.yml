@@ -20,11 +20,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     networks: [database]
+    # Healthchecks probe every second while starting (start_interval, Engine 25+)
+    # so dependent services start sooner; steady-state probing stays at 5s.
     healthcheck:
       test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -p "$$PGPORT"']
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 30s
+      start_interval: 1s
 
   migrate:
     logging: *logging
@@ -70,6 +74,7 @@ services:
       timeout: 3s
       retries: 20
       start_period: 30s
+      start_interval: 1s
 
   web:
     restart: unless-stopped
@@ -87,6 +92,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 30s
+      start_interval: 1s
 
   proxy:
     logging: *logging
@@ -114,6 +121,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 30s
+      start_interval: 1s
 
 networks:
   application:
