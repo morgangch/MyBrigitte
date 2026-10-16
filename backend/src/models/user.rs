@@ -42,6 +42,13 @@ pub struct CreateUserRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct ListUsersQuery {
+    pub limit: Option<u64>,
+    pub offset: Option<u64>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateUserRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,

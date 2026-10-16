@@ -1,7 +1,10 @@
 use crate::entity::user::{self, Model, Role};
 use crate::error::ApiError;
 use sea_orm::entity::prelude::Uuid;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel,
+    PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, Set,
+};
 use std::collections::HashMap;
 
 // Delete (Deactivate to not break the KPIs)
@@ -148,11 +151,32 @@ pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Model, ApiE
         .ok_or(ApiError::NotFound)
 }
 
-pub async fn find_all(db: &DatabaseConnection) -> Result<Vec<Model>, ApiError> {
-    user::Entity::find()
+pub struct ListedUsers {
+    pub items: Vec<Model>,
+    pub total: u64,
+}
+
+pub async fn find_page(
+    db: &DatabaseConnection,
+    limit: u64,
+    offset: u64,
+    is_active: bool,
+) -> Result<ListedUsers, ApiError> {
+    let query = user::Entity::find()
+        .filter(user::Column::IsActive.eq(is_active))
+        .order_by_asc(user::Column::LastName)
+        .order_by_asc(user::Column::FirstName)
+        .order_by_asc(user::Column::Id);
+
+    let total = query.clone().count(db).await.map_err(ApiError::from_db)?;
+    let items = query
+        .offset(offset)
+        .limit(limit)
         .all(db)
         .await
-        .map_err(ApiError::from_db)
+        .map_err(ApiError::from_db)?;
+
+    Ok(ListedUsers { items, total })
 }
 
 // Validation

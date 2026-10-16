@@ -1,5 +1,6 @@
 use axum::{
     Json,
+    extract::rejection::JsonRejection,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
@@ -82,6 +83,14 @@ impl IntoResponse for ApiError {
         }
 
         (status, Json(json!({ "error": error }))).into_response()
+    }
+}
+
+impl From<JsonRejection> for ApiError {
+    fn from(rejection: JsonRejection) -> Self {
+        let mut fields = HashMap::new();
+        fields.insert("body".to_string(), rejection.body_text());
+        Self::ValidationFailed(fields)
     }
 }
 

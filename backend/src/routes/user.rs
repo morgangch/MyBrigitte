@@ -1,7 +1,4 @@
-use axum::{
-    Router,
-    routing::{get, patch},
-};
+use axum::{Router, routing::get};
 
 use crate::{AppState, handlers::user};
 
@@ -14,5 +11,4 @@ pub fn user_routes() -> Router<AppState> {
                 .patch(user::update_user)
                 .delete(user::delete_user),
         )
-        .route("/users/{id}/deactivate", patch(user::deactivate_user))
 }
