@@ -23,7 +23,7 @@ export default function HistoryPage() {
       <Card
         title="Historique"
         className="card-flush"
-        action={<PeriodPicker weekStart={weekStart} onChange={setWeekStart} />}
+        action={<PeriodPicker start={weekStart} onChange={setWeekStart} />}
       >
         <HistoryTable days={days} sessions={MY_WORK_SESSIONS.items} todayKey={todayKey} />
       </Card>
