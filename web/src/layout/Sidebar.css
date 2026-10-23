@@ -71,16 +71,44 @@
 .sidebar-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   margin-top: auto;
-  padding: 12px 10px;
+  padding: 12px 0 12px 10px;
   border-top: 1px solid var(--color-border);
+}
+
+/* flex: 1 : le lien prend toute la place, le bouton reste collé à droite */
+.sidebar-profile-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
   color: var(--color-text);
   text-decoration: none;
 }
 
-.sidebar-profile:hover .sidebar-profile-name {
+.sidebar-profile-link:hover .sidebar-profile-name {
   color: var(--color-primary);
+}
+
+.sidebar-logout {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-small);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .sidebar-profile-text {
