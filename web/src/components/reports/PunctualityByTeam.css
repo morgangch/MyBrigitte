@@ -1,0 +1,41 @@
+/* La carte s'étire à la hauteur du graphique voisin : on centre la liste verticalement dans l'espace libre */
+.punctuality-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.punctuality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Nom | barre | taux : colonnes fixes pour que toutes les barres commencent et finissent au même endroit */
+.punctuality-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+}
+
+.punctuality-team {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.punctuality-rate {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.punctuality-empty {
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.punctuality-rate-below {
+  color: var(--color-danger);
+}
