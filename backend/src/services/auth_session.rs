@@ -1,5 +1,8 @@
 use chrono::{Duration, Utc};
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, DatabaseConnection, prelude::Uuid};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+    prelude::Uuid,
+};
 
 use crate::{
     auth::refresh::{REFRESH_TOKEN_DURATION_DAYS, generate_refresh_token, hash_refresh_token},
@@ -8,6 +11,8 @@ use crate::{
 };
 
 pub async fn create_session(db: &DatabaseConnection, user_id: Uuid) -> Result<String, ApiError> {
+    purge_expired_sessions(db, user_id).await?;
+
     let token = generate_refresh_token();
     let expires_at = (Utc::now() + Duration::days(REFRESH_TOKEN_DURATION_DAYS)).fixed_offset();
 
@@ -22,4 +27,15 @@ pub async fn create_session(db: &DatabaseConnection, user_id: Uuid) -> Result<St
     .map_err(ApiError::from_db)?;
 
     Ok(token)
+}
+
+async fn purge_expired_sessions(db: &DatabaseConnection, user_id: Uuid) -> Result<(), ApiError> {
+    auth_session::Entity::delete_many()
+        .filter(auth_session::Column::UserId.eq(user_id))
+        .filter(auth_session::Column::ExpiresAt.lt(Utc::now().fixed_offset()))
+        .exec(db)
+        .await
+        .map_err(ApiError::from_db)?;
+
+    Ok(())
 }
