@@ -36,7 +36,7 @@ pub async fn find_session(
         .filter(auth_session::Column::RefreshTokenHash.eq(hash_refresh_token(token)))
         .one(db)
         .await
-        .map_err(|_| ApiError::InternalError)
+        .map_err(ApiError::from_db)
 }
 
 pub async fn revoke_session(db: &DatabaseConnection, session_id: Uuid) -> Result<bool, ApiError> {
@@ -49,7 +49,7 @@ pub async fn revoke_session(db: &DatabaseConnection, session_id: Uuid) -> Result
         .filter(auth_session::Column::RevokedAt.is_null())
         .exec(db)
         .await
-        .map_err(|_| ApiError::InternalError)?;
+        .map_err(ApiError::from_db)?;
 
     Ok(result.rows_affected == 1)
 }
@@ -64,7 +64,7 @@ pub async fn revoke_all_sessions(db: &DatabaseConnection, user_id: Uuid) -> Resu
         .filter(auth_session::Column::RevokedAt.is_null())
         .exec(db)
         .await
-        .map_err(|_| ApiError::InternalError)?;
+        .map_err(ApiError::from_db)?;
 
     Ok(())
 }
