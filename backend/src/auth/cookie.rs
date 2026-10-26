@@ -46,4 +46,21 @@ mod tests {
     fn cookie_lasts_seven_days() {
         assert!(refresh_cookie("abc").contains("Max-Age=604800"));
     }
+
+    #[test]
+    fn reads_refresh_token_among_other_cookies() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            COOKIE,
+            "theme=dark; refresh_token=abc123; lang=fr".parse().unwrap(),
+        );
+        assert_eq!(read_refresh_cookie(&headers), Some("abc123"));
+    }
+
+    #[test]
+    fn missing_refresh_cookie_returns_none() {
+        let mut headers = HeaderMap::new();
+        headers.insert(COOKIE, "theme=dark".parse().unwrap());
+        assert_eq!(read_refresh_cookie(&headers), None);
+    }
 }
