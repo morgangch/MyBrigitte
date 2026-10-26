@@ -25,15 +25,15 @@ pub async fn login(
         .one(db)
         .await
         .map_err(ApiError::from_db)?
-        .ok_or(ApiError::Unauthorized)?;
+        .ok_or(ApiError::InvalidCredentials)?;
 
     let hash = user
         .password_hash
         .as_deref()
-        .ok_or(ApiError::Unauthorized)?;
+        .ok_or(ApiError::InvalidCredentials)?;
 
     if !user.is_active || !verify_password(password, hash) {
-        return Err(ApiError::Unauthorized);
+        return Err(ApiError::InvalidCredentials);
     }
 
     let access_token =
