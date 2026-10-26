@@ -1,7 +1,7 @@
 use axum::{
     Json,
     extract::{State, rejection::JsonRejection},
-    http::header::SET_COOKIE,
+    http::{HeaderMap, header::SET_COOKIE},
     response::IntoResponse,
 };
 use serde::Deserialize;
@@ -9,7 +9,10 @@ use serde_json::{Value, json};
 
 use crate::{
     AppState,
-    auth::{cookie::refresh_cookie, extractor::AuthUser},
+    auth::{
+        cookie::{read_refresh_cookie, refresh_cookie},
+        extractor::AuthUser,
+    },
     error::ApiError,
     services::auth as auth_service,
 };
@@ -32,6 +35,17 @@ pub async fn login(
     let Json(body) = body?;
     let tokens =
         auth_service::login(&state.db, &body.email, &body.password, &state.jwt_secret).await?;
+    Ok((
+        [(SET_COOKIE, refresh_cookie(&tokens.refresh_token))],
+        Json(json!({ "access_token": tokens.access_token })),
+    ))
+}
+pub async fn refresh(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, ApiError> {
+    let token = read_refresh_cookie(&headers).ok_or(ApiError::Unauthorized)?;
+    let tokens = auth_service::refresh(&state.db, token, &state.jwt_secret).await?;
     Ok((
         [(SET_COOKIE, refresh_cookie(&tokens.refresh_token))],
         Json(json!({ "access_token": tokens.access_token })),
