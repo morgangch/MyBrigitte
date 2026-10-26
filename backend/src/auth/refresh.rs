@@ -2,6 +2,8 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use rand::Rng;
 use sha2::{Digest, Sha256};
 
+pub const REFRESH_TOKEN_DURATION_DAYS: i64 = 7;
+
 pub fn generate_refresh_token() -> String {
     let mut bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut bytes);

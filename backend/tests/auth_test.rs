@@ -7,7 +7,7 @@ use backend::auth::jwt::create_token;
 async fn me_without_token_is_unauthorized() {
     let (status, json) = common::get_json("/me").await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
-    assert_eq!(json["error"], "Unauthorized");
+    assert_eq!(json["error"]["code"], "unauthorized");
 }
 
 #[tokio::test]
