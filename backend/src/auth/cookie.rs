@@ -1,3 +1,5 @@
+use axum::http::{HeaderMap, header::COOKIE};
+
 use crate::auth::refresh::REFRESH_TOKEN_DURATION_DAYS;
 
 pub const REFRESH_COOKIE_NAME: &str = "refresh_token";
@@ -8,6 +10,18 @@ pub fn refresh_cookie(token: &str) -> String {
     format!(
         "{REFRESH_COOKIE_NAME}={token}; HttpOnly; Secure; SameSite=Strict; Path={REFRESH_COOKIE_PATH}; Max-Age={max_age}"
     )
+}
+pub fn read_refresh_cookie(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get_all(COOKIE)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(';'))
+        .find_map(|pair| {
+            pair.trim()
+                .strip_prefix(REFRESH_COOKIE_NAME)?
+                .strip_prefix('=')
+        })
 }
 
 #[cfg(test)]
