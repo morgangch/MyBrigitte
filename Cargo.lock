@@ -414,6 +414,7 @@ dependencies = [
  "dotenvy",
  "http-body-util",
  "jsonwebtoken",
+ "migration",
  "rand 0.10.3",
  "sea-orm",
  "serde",
@@ -421,6 +422,7 @@ dependencies = [
  "sha2 0.11.1",
  "tokio",
  "tower",
+ "uuid",
 ]
 
 [[package]]
@@ -3062,6 +3064,7 @@ version = "1.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ef6dac1e96601b4fb3acccccff2139741fcb757cb9a36089bf5be91cfb285ce"
 dependencies = [
+ "getrandom 0.4.3",
  "js-sys",
  "serde_core",
  "wasm-bindgen",

@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::rejection::JsonRejection,
+    extract::rejection::{JsonRejection, QueryRejection},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
@@ -14,7 +14,12 @@ pub enum ApiError {
     EmailTaken,
     Conflict,
     ForeignKey,
+    /// Token missing, invalid or expired, or its account no longer usable.
     Unauthorized,
+    /// Wrong email or password on login.
+    InvalidCredentials,
+    /// Authenticated, but the role does not allow this route.
+    Forbidden,
     Internal,
     ValidationFailed(HashMap<String, String>),
 }
@@ -59,8 +64,20 @@ impl IntoResponse for ApiError {
             ),
             ApiError::Unauthorized => (
                 StatusCode::UNAUTHORIZED,
-                "unauthorized",
-                "Unauthorized",
+                "unauthenticated",
+                "Authentication required",
+                None,
+            ),
+            ApiError::InvalidCredentials => (
+                StatusCode::UNAUTHORIZED,
+                "invalid_credentials",
+                "Invalid email or password",
+                None,
+            ),
+            ApiError::Forbidden => (
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                "Not allowed for this role",
                 None,
             ),
             ApiError::Internal => (
@@ -97,6 +114,15 @@ impl From<JsonRejection> for ApiError {
     }
 }
 
+/// Same envelope for a query string that does not parse, such as `?limit=abc` or an invalid `team_id`.
+impl From<QueryRejection> for ApiError {
+    fn from(rejection: QueryRejection) -> Self {
+        let mut fields = HashMap::new();
+        fields.insert("query".to_string(), rejection.body_text());
+        Self::ValidationFailed(fields)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,8 +138,14 @@ mod tests {
             (
                 ApiError::Unauthorized,
                 StatusCode::UNAUTHORIZED,
-                "unauthorized",
+                "unauthenticated",
             ),
+            (
+                ApiError::InvalidCredentials,
+                StatusCode::UNAUTHORIZED,
+                "invalid_credentials",
+            ),
+            (ApiError::Forbidden, StatusCode::FORBIDDEN, "forbidden"),
             (
                 ApiError::Internal,
                 StatusCode::INTERNAL_SERVER_ERROR,
