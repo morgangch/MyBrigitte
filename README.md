@@ -7,14 +7,32 @@ its `/api` proxy is ready for API integration. Microsoft OAuth is planned.
 
 ## Docker development
 
-Requires Docker Engine with Compose 2.23+ (Compose Watch `sync+restart`).
+Requires Docker Engine 25+ with Compose 2.24+ (Compose Watch `sync+restart`,
+`!reset`, healthcheck `start_interval`).
 Run all commands from this directory. The default stack is **production**:
 `docker compose up` reads the root `.env` and uses production runtime images.
 See the production setup below. Development requires its explicit override.
 
-`make dev` creates `.env.dev` from its example if absent and starts development
-with hot reload. `make dev-down` stops it while preserving data.
-`make prod` uses the production `.env`; `make prod-down` preserves its data.
+`make` lists every target. `make dev` creates `.env.dev` from its example if
+absent, builds and starts development, then follows the backend and web logs with
+hot reload (Ctrl+C stops it, `make dev-up` starts it in the background instead).
+`make dev-down` stops it while preserving data. `make prod` uses the production
+`.env`; `make prod-down` preserves its data. `make logs`, `make prod-logs`
+(`s=<service>` for one service), `make ps` and `make shell` help inspect them.
+
+On a terminal with Python 3.8+, `make dev`, `make dev-up` and `make prod` show
+progress bars for the image builds (including Rust crates compiled) and a startup
+checklist of every service. Crate estimates are remembered in
+`~/.cache/mybrigitte/stack-stats.json` (`%LOCALAPPDATA%\mybrigitte` on Windows).
+Without Python, outside a terminal, in CI or with `make <target> PLAIN=1`, they
+print Compose's own output.
+
+On Windows 10/11, the targets work from PowerShell, cmd or Git Bash with Docker
+Desktop (Linux containers) and GNU make, for example `winget install
+ezwinports.make`. Native Windows make runs recipes through cmd.exe and finds
+Python as `py`, `python` or `python3`; the quality targets (`hooks`, `check*`,
+`audit`) use Git Bash from Git for Windows. Outside Windows Terminal and the VS
+Code terminal, the progress UI uses ASCII symbols.
 
 Copy the development configuration:
 
@@ -23,24 +41,31 @@ cp .env.dev.example .env.dev
 docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml up --build --watch
 ```
 
-Open http://localhost:5173. Vite reloads mounted frontend sources; Compose Watch
-syncs Rust sources and restarts `cargo run`, recompiling the backend. Changes to
-workspace/dependency/migration files rebuild the dev backend. Migration changes
-also need the migration job rebuilt and rerun before the backend:
+Open http://localhost:5173. Vite reloads mounted frontend sources and starts
+without waiting for the API. Compose Watch syncs Rust sources and restarts the
+backend, which recompiles incrementally. Changes to workspace/dependency/migration
+files rebuild the dev backend image. Migration changes also need the migration job
+rebuilt and rerun before the backend:
 
 ```bash
 docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml build migrate
 docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml run --rm migrate
 ```
 
-The first backend build downloads and compiles dependencies. Rust build artifacts,
-Cargo registry and frontend dependencies use development-only named volumes.
-After changing `web/bun.lock`, rebuild web and refresh its dependency volume:
+The dev images contain only toolchains and sources: Rust compiles at container
+start, in the `backend_target` volume shared by `migrate` and `backend`. The first
+start downloads and compiles every dependency; later starts and source edits
+recompile only the workspace crates, even after a base-image refresh. Crates are
+fetched while building the image (`migrate` has no Internet access), so cargo runs
+offline in the containers. Frontend dependencies use a development-only named
+volume too. The web
+container runs `bun install --frozen-lockfile` on start, so after changing
+`web/bun.lock`, restarting `make dev` refreshes its dependency volume.
 
-```bash
-docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml build web
-docker compose -p mybrigitte-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml run --rm --no-deps web bun install --frozen-lockfile
-```
+Production images keep the Cargo registry/target and Bun download caches in
+BuildKit cache mounts: a source edit recompiles only the workspace crates.
+`docker builder prune` drops these caches along with the rest of the build cache;
+`make prune` drops only build cache unused for 7 days.
 
 ## Disposable development fixtures
 
@@ -123,6 +148,13 @@ It supports Vite WebSockets and resolves upstreams after container replacement.
 Vite also retains its API proxy for development outside Docker. The
 browser needs only the web origin. No CORS configuration or Compose DNS names
 are needed in browser code. SPA routes fall back to `index.html`.
+
+For API clients (curl, Postman, Bruno), the development proxy also serves the raw
+API on the backend port, without the `/api` prefix or rate limit:
+`http://localhost:3001/health`, `http://localhost:3001/users`, and so on (`PORT`
+and `WEB_BIND_ADDRESS` in `.env.dev`). It has no CORS headers, so browser code
+keeps using `/api`. The backend container itself publishes no port, and the
+production proxy serves only the web port.
 
 Proxy, web and backend share `application`; only backend, migrator and PostgreSQL join
 the internal `database` network. PostgreSQL, backend and web publish no host ports.
