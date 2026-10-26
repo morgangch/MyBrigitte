@@ -1,7 +1,10 @@
 use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, sea_query::Expr};
 
 use crate::{
-    auth::{jwt::create_token, password::verify_password},
+    auth::{
+        jwt::create_token,
+        password::{verify_dummy_password, verify_password},
+    },
     entity::user,
     error::ApiError,
     services::auth_session,
@@ -22,15 +25,19 @@ pub async fn login(
         .filter(Expr::cust_with_values("lower(email) = lower($1)", [email]))
         .one(db)
         .await
-        .map_err(ApiError::from_db)?
-        .ok_or(ApiError::Unauthorized)?;
+        .map_err(ApiError::from_db)?;
 
-    let hash = user
-        .password_hash
-        .as_deref()
-        .ok_or(ApiError::Unauthorized)?;
+    let Some(user) = user else {
+        verify_dummy_password(password);
+        return Err(ApiError::Unauthorized);
+    };
 
-    if !user.is_active || !verify_password(password, hash) {
+    let Some(hash) = user.password_hash.as_deref() else {
+        verify_dummy_password(password);
+        return Err(ApiError::Unauthorized);
+    };
+
+    if !verify_password(password, hash) || !user.is_active {
         return Err(ApiError::Unauthorized);
     }
 
