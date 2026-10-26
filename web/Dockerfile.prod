@@ -1,7 +1,9 @@
+# syntax=docker/dockerfile:1
 FROM oven/bun:1.4.3 AS builder
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN bun ci
+RUN --mount=type=cache,id=mybrigitte-bun-cache,target=/root/.bun/install/cache \
+    bun ci
 COPY . .
 RUN bun --bun run build
 

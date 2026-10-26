@@ -65,13 +65,14 @@ make audit       # RustSec and Bun audits
 make check       # Complete local gate
 ```
 
-On Windows 10/11, run these commands in Git Bash (or WSL) with Docker Desktop
-using Linux containers. `.gitattributes` keeps shell scripts and hooks in LF,
-even with `core.autocrlf=true`. For an existing checkout with CRLF scripts,
-first preserve any local edits, then refresh the affected files:
+On Windows 10/11, use Docker Desktop with Linux containers and run these commands
+from PowerShell, cmd or Git Bash (or WSL): from PowerShell and cmd, native GNU make
+runs the scripts with Git for Windows' Bash. `.gitattributes` keeps shell scripts,
+hooks and the Makefile in LF, even with `core.autocrlf=true`. For an existing
+checkout with CRLF files, first preserve any local edits, then refresh them:
 
 ```bash
-git restore --worktree -- .githooks scripts/*.sh dev/checks/entrypoint.sh dev/seed/run.sh
+git restore --worktree -- .githooks scripts/*.sh dev/checks/entrypoint.sh dev/seed/run.sh Makefile
 ```
 
 Hook installation changes only this clone's `core.hooksPath` and refuses to

@@ -29,16 +29,16 @@ pub async fn login(
 
     let Some(user) = user else {
         verify_dummy_password(password);
-        return Err(ApiError::Unauthorized);
+        return Err(ApiError::InvalidCredentials);
     };
 
     let Some(hash) = user.password_hash.as_deref() else {
         verify_dummy_password(password);
-        return Err(ApiError::Unauthorized);
+        return Err(ApiError::InvalidCredentials);
     };
 
     if !verify_password(password, hash) || !user.is_active {
-        return Err(ApiError::Unauthorized);
+        return Err(ApiError::InvalidCredentials);
     }
 
     let access_token =

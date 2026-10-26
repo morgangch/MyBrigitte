@@ -7,7 +7,8 @@ dev_project="mybrigitte-smoke-dev-$suffix"
 prod_project="mybrigitte-smoke-prod-$suffix"
 dev_port="${SMOKE_DEV_PORT:-15173}"
 prod_port="${SMOKE_PROD_PORT:-18081}"
-dev() { PORT="${SMOKE_DEV_API_PORT:-3901}" WEB_PORT="$dev_port" docker compose -p "$dev_project" --env-file .env.dev.example -f docker-compose.yml -f docker-compose.dev.yml "$@"; }
+dev_api_port="${SMOKE_DEV_API_PORT:-3901}"
+dev() { PORT="$dev_api_port" WEB_PORT="$dev_port" docker compose -p "$dev_project" --env-file .env.dev.example -f docker-compose.yml -f docker-compose.dev.yml "$@"; }
 prod() { PORT="${SMOKE_PROD_API_PORT:-3902}" WEB_PORT="$prod_port" docker compose -p "$prod_project" --env-file .env.example -f docker-compose.yml -f docker-compose.prod.yml "$@"; }
 cleanup() {
   result=$?
@@ -22,14 +23,18 @@ dev up -d --build --wait --wait-timeout 600
 for port in "$dev_port" "$prod_port"; do
   curl --fail --silent --show-error "http://127.0.0.1:$port/" >/dev/null
   curl --fail --silent --show-error "http://127.0.0.1:$port/dashboard" >/dev/null
+  # The browser reaches the API through the web origin: health, then a DB-backed route.
   curl --fail --silent --show-error "http://127.0.0.1:$port/api/health" | python3 -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ok"'
-  curl --fail --silent --show-error "http://127.0.0.1:$port/api/users/1" >/dev/null
+  curl --fail --silent --show-error "http://127.0.0.1:$port/api/users" >/dev/null
 done
+# Dev also serves the unprefixed API on the backend port; production does not.
+curl --fail --silent --show-error "http://127.0.0.1:$dev_api_port/health" | python3 -c 'import json,sys; assert json.load(sys.stdin)["status"] == "ok"'
+if curl --silent --max-time 2 "http://127.0.0.1:${SMOKE_PROD_API_PORT:-3902}/health" >/dev/null; then echo 'Production exposes the raw API' >&2; exit 1; fi
 # Seed contains the frontend fixture records and can be replayed without duplicates.
 check_seed() {
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM users;')" = 9
-  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM teams;')" = 5
-  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM team_members;')" = 8
+  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM teams;')" = 6
+  test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM team_members;')" = 9
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_sessions;')" = 7
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_schedules;')" = 5
   test "$(dev exec -T postgres psql -U mybrigitte_dev -d mybrigitte_dev -Atc 'SELECT count(*) FROM work_sessions WHERE end_time IS NULL;')" = 1
