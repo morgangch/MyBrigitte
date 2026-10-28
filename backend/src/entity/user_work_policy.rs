@@ -31,6 +31,8 @@ pub struct Model {
     pub user: BelongsTo<super::user::Entity>,
     #[sea_orm(belongs_to, relation_enum = "Creator", from = "created_by", to = "id")]
     pub creator: BelongsTo<super::user::Entity>,
+    #[sea_orm(has_many)]
+    pub schedules: HasMany<super::work_schedule::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
