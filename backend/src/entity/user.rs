@@ -26,6 +26,17 @@ pub struct Model {
     pub updated_at: DateTimeWithTimeZone,
     #[sea_orm(has_many)]
     pub work_sessions: HasMany<super::work_session::Entity>,
+    #[sea_orm(has_many, relation_enum = "WorkPolicies", via_rel = "User")]
+    pub work_policies: HasMany<super::user_work_policy::Entity>,
+    #[sea_orm(has_many, relation_enum = "CreatedWorkPolicies", via_rel = "Creator")]
+    pub created_work_policies: HasMany<super::user_work_policy::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+// `find_related` from a user returns the policies that apply to them, not the ones they created.
+impl Related<super::user_work_policy::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::WorkPolicies.def()
+    }
+}
