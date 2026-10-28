@@ -2,6 +2,16 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHasher, PasswordVerifier, phc::PasswordHash},
 };
+
+use std::sync::LazyLock;
+
+static DUMMY_HASH: LazyLock<String> =
+    LazyLock::new(|| hash_password("timing-equalizer").expect("argon2 must hash a constant"));
+
+pub fn verify_dummy_password(password: &str) {
+    verify_password(password, &DUMMY_HASH);
+}
+
 pub fn hash_password(password: &str) -> Result<String, String> {
     Argon2::default()
         .hash_password(password.as_bytes())
@@ -50,5 +60,11 @@ mod tests {
     #[test]
     fn invalid_stored_hash_is_rejected() {
         assert!(!verify_password("secret123", "not_a_valid_hash"));
+    }
+
+    #[test]
+    fn dummy_hash_uses_argon2id() {
+        assert!(DUMMY_HASH.starts_with("$argon2id$"));
+        verify_dummy_password("anything");
     }
 }
