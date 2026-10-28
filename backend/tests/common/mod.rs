@@ -8,11 +8,14 @@ use backend::{
     AppState,
     auth::jwt::create_token,
     create_app,
-    entity::{team, team_member, user},
+    entity::{team, team_member, user, user_work_policy},
 };
 use http_body_util::BodyExt;
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{ActiveModelTrait, Database, DatabaseConnection, Set, prelude::Uuid};
+use sea_orm::{
+    ActiveModelTrait, Database, DatabaseConnection, Set,
+    prelude::{Date, Uuid},
+};
 use serde_json::Value;
 use tokio::sync::OnceCell;
 use tower::ServiceExt;
@@ -172,4 +175,23 @@ pub async fn manager_with_team(db: &DatabaseConnection) -> (user::Model, team::M
     let manager = insert_user(db, user::Role::Manager, Some(team.id), "Mia", "Manager").await;
     let token = token_for(&manager);
     (manager, team, token)
+}
+
+/// A fixed policy for `user_id`, created by `created_by`, in force from `effective_from`.
+pub async fn insert_work_policy(
+    db: &DatabaseConnection,
+    user_id: Uuid,
+    created_by: Uuid,
+    effective_from: Date,
+) -> user_work_policy::Model {
+    user_work_policy::ActiveModel {
+        user_id: Set(user_id),
+        mode: Set(user_work_policy::Mode::Fixed),
+        effective_from: Set(effective_from),
+        created_by: Set(created_by),
+        ..Default::default()
+    }
+    .insert(db)
+    .await
+    .unwrap()
 }
