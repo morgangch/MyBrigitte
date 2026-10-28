@@ -1,5 +1,5 @@
-import { ChartColumn, CircleUser, History, LayoutDashboard, UserCog, Users } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { ChartColumn, CircleUser, History, LayoutDashboard, LogOut, UserCog, Users } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router'
 import { Avatar, Logo } from '../components/ui'
 import { ME } from '../lib/fakeData.ts'
 import { ROLE_LABELS } from '../lib/labels.ts'
@@ -29,6 +29,13 @@ const MENU = [
 const VISIBLE_MENU = MENU.filter((section) => !section.managerOnly || ME.role === 'manager')
 
 export default function Sidebar() {
+  const navigate = useNavigate()
+
+  // TODO(auth-api) : POST /auth/logout (révoque le refresh token), puis oublier l'access token
+  function handleLogout() {
+    navigate('/login')
+  }
+
   return (
     <nav className="sidebar" aria-label="Navigation principale">
       <NavLink to="/" end className="sidebar-logo">
@@ -54,16 +61,22 @@ export default function Sidebar() {
           </ul>
         </div>
       ))}
-      <NavLink to="/profile" className="sidebar-profile">
-        <Avatar name={`${ME.first_name} ${ME.last_name}`} />
-        <div className="sidebar-profile-text">
-          <p className="sidebar-profile-name">{`${ME.first_name} ${ME.last_name}`}</p>
-          <p className="sidebar-profile-role">
-            {ROLE_LABELS[ME.role]}
-            {ME.team && ` · ${ME.team.name}`}
-          </p>
-        </div>
-      </NavLink>
+      {/* Le bouton est à côté du lien, pas dedans : un <button> ne peut pas être dans un <a> */}
+      <div className="sidebar-profile">
+        <NavLink to="/profile" className="sidebar-profile-link">
+          <Avatar name={`${ME.first_name} ${ME.last_name}`} />
+          <div className="sidebar-profile-text">
+            <p className="sidebar-profile-name">{`${ME.first_name} ${ME.last_name}`}</p>
+            <p className="sidebar-profile-role">
+              {ROLE_LABELS[ME.role]}
+              {ME.team && ` · ${ME.team.name}`}
+            </p>
+          </div>
+        </NavLink>
+        <button type="button" className="sidebar-logout" aria-label="Se déconnecter" title="Se déconnecter" onClick={handleLogout}>
+          <LogOut size={18} />
+        </button>
+      </div>
     </nav>
   )
 }

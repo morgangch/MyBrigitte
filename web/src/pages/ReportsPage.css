@@ -1,0 +1,30 @@
+/* Équipe à gauche, période à droite ; l'une sous l'autre si la place manque */
+.reports-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reports-filters > .field {
+  width: min(240px, 100%);
+}
+
+.reports-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+/* Texte d'aide à droite du titre des cartes (objectif, règle légale) */
+.report-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
+@media (max-width: 900px) {
+  .reports-charts {
+    grid-template-columns: 1fr;
+  }
+}
