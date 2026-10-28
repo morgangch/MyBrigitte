@@ -24,6 +24,8 @@ pub struct Model {
     pub is_active: bool,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
+    #[sea_orm(has_many)]
+    pub work_sessions: HasMany<super::work_session::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
