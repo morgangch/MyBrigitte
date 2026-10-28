@@ -9,4 +9,5 @@ pub fn auth_routes() -> Router<AppState> {
     Router::new()
         .route("/me", get(auth::me))
         .route("/auth/login", post(auth::login))
+        .route("/auth/refresh", post(auth::refresh))
 }
