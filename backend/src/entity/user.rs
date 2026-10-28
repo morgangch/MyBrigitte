@@ -30,6 +30,8 @@ pub struct Model {
     pub work_policies: HasMany<super::user_work_policy::Entity>,
     #[sea_orm(has_many, relation_enum = "CreatedWorkPolicies", via_rel = "Creator")]
     pub created_work_policies: HasMany<super::user_work_policy::Entity>,
+    #[sea_orm(has_many)]
+    pub audit_entries: HasMany<super::audit_log::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
