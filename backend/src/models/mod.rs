@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+pub mod team;
 pub mod user;
 
 #[derive(Debug, Serialize)]

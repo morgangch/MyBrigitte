@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM rust:1.99-bookworm AS builder
 
 WORKDIR /app
@@ -7,7 +8,12 @@ COPY backend/Cargo.toml backend/Cargo.toml
 COPY backend/src backend/src
 COPY migration migration
 
-RUN cargo build --release --locked -p backend -p migration
+# Registry and target persist across builds: a source edit recompiles only
+# the workspace crates. Binaries leave the cache mount before the layer ends.
+RUN --mount=type=cache,id=mybrigitte-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,id=mybrigitte-backend-release-target,target=/app/target,sharing=locked \
+    cargo build --release --locked -p backend -p migration \
+    && cp target/release/backend target/release/migration /usr/local/bin/
 
 FROM debian:bookworm-slim AS runtime
 
@@ -16,9 +22,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /app/target/release/backend /usr/local/bin/backend
-
-COPY --from=builder /app/target/release/migration /usr/local/bin/migration
+COPY --from=builder /usr/local/bin/backend /usr/local/bin/backend
+COPY --from=builder /usr/local/bin/migration /usr/local/bin/migration
 
 USER 10001:10001
 EXPOSE 3001

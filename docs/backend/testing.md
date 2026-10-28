@@ -39,6 +39,22 @@ Test the application from the outside, as a client would (e.g. sending HTTP requ
 - No `#[cfg(test)]` nor `mod tests { }` wrapper needed: Cargo only compiles this folder during `cargo test`.
 - Shared helpers go in `tests/common/mod.rs` and are imported with `mod common;`.
 
+## Database tests
+
+Tests that need Postgres read `TEST_DATABASE_URL`. When it is unset, they return early and pass, so `cargo test` works without a database. CI does not set it: these tests run locally only.
+
+```bash
+docker run -d --rm --name mybrigitte-test-pg -p 127.0.0.1:55432:5432 \
+  -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=mybrigitte_test postgres:18
+TEST_DATABASE_URL=postgresql://test:test@127.0.0.1:55432/mybrigitte_test cargo test -p backend
+docker stop mybrigitte-test-pg
+```
+
+- `common::test_db()` connects and applies the migrations once per test binary.
+- Start a database test with `let Some(db) = common::test_db().await else { return };`.
+- Tests never clean up. Each one creates its own team with a unique name (`common::manager_with_team`, `insert_team`, `insert_user`) and filters on it, so tests can run in parallel on the same database.
+- Never point `TEST_DATABASE_URL` at the dev or production database.
+
 ## Unit tests (inside `src/`)
 
 Test internal logic (private functions, error conversions...).

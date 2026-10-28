@@ -1,7 +1,9 @@
 use sea_orm::entity::prelude::{DateTimeWithTimeZone, Uuid};
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::entity::user::{self, Model};
+use crate::entity::user;
+use crate::models::team::TeamRef;
+use crate::services::user::UserWithTeam;
 
 /// Distinguishes a missing `phone_number` key from JSON `null`.
 ///
@@ -33,18 +35,22 @@ pub struct UserResponse {
     pub email: String,
     pub phone_number: Option<String>,
     pub role: UserRole,
+    /// `None` only for accounts created outside the API, such as the first seeded manager.
+    pub team: Option<TeamRef>,
     pub is_active: bool,
     pub created_at: DateTimeWithTimeZone,
-    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[derive(Debug, Deserialize)]
+/// Body of `POST /users`. There is no password: the user signs in with Microsoft,
+/// then can set one through `/me/password`.
 pub struct CreateUserRequest {
     pub first_name: String,
     pub last_name: String,
     pub email: String,
     pub phone_number: Option<String>,
-    pub password: Option<String>,
+    /// Every user belongs to a team from creation.
+    pub team_id: Uuid,
     /// Missing key becomes `employee`. JSON `null` is still rejected.
     #[serde(default)]
     pub role: UserRole,
@@ -56,17 +62,24 @@ pub struct ListUsersQuery {
     pub limit: Option<u64>,
     pub offset: Option<u64>,
     pub is_active: Option<bool>,
+    pub team_id: Option<Uuid>,
+    pub role: Option<UserRole>,
+    /// Case-insensitive search in the full name and the email.
+    pub q: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+/// Body of `PATCH /users/{id}`. The password is not editable here: it belongs to the user.
 pub struct UpdateUserRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
     #[serde(default, deserialize_with = "deserialize_optional_phone")]
     pub phone_number: Option<Option<String>>,
-    pub password: Option<String>,
     pub role: Option<UserRole>,
+    /// Moves the user to this team. A user cannot be left without a team.
+    pub team_id: Option<Uuid>,
+    pub is_active: Option<bool>,
 }
 
 impl From<user::Role> for UserRole {
@@ -87,8 +100,8 @@ impl From<UserRole> for user::Role {
     }
 }
 
-impl From<Model> for UserResponse {
-    fn from(model: Model) -> Self {
+impl From<UserWithTeam> for UserResponse {
+    fn from(UserWithTeam { user: model, team }: UserWithTeam) -> Self {
         Self {
             id: model.id,
             first_name: model.first_name,
@@ -96,9 +109,9 @@ impl From<Model> for UserResponse {
             email: model.email,
             phone_number: model.phone_number,
             role: model.role.into(),
+            team: team.map(TeamRef::from),
             is_active: model.is_active,
             created_at: model.created_at,
-            updated_at: model.updated_at,
         }
     }
 }
@@ -110,7 +123,7 @@ mod tests {
     #[test]
     fn create_user_without_role_defaults_to_employee() {
         let parsed: CreateUserRequest = serde_json::from_str(
-            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com"}"#,
+            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com","team_id":"00000000-0000-0000-0000-000000000001"}"#,
         )
         .unwrap();
         assert_eq!(parsed.role, UserRole::Employee);
@@ -119,7 +132,7 @@ mod tests {
     #[test]
     fn create_user_keeps_an_explicit_manager_role() {
         let parsed: CreateUserRequest = serde_json::from_str(
-            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com","role":"manager"}"#,
+            r#"{"first_name":"Ada","last_name":"Lovelace","email":"ada@x.com","team_id":"00000000-0000-0000-0000-000000000001","role":"manager"}"#,
         )
         .unwrap();
         assert_eq!(parsed.role, UserRole::Manager);

@@ -3,7 +3,14 @@ use axum::{
     http::{header::AUTHORIZATION, request::Parts},
 };
 
-use crate::{AppState, auth::jwt::verify_token, error::ApiError};
+use sea_orm::{EntityTrait, prelude::Uuid};
+
+use crate::{
+    AppState,
+    auth::jwt::verify_token,
+    entity::user::{self, Role},
+    error::ApiError,
+};
 
 pub struct AuthUser {
     pub user_id: String,
@@ -28,6 +35,40 @@ impl FromRequestParts<AppState> for AuthUser {
         Ok(AuthUser {
             user_id: claims.sub,
         })
+    }
+}
+
+/// An authenticated, active manager. Reserves a route to managers.
+///
+/// The role is read from the database on each request, not from the token, so a demotion or a
+/// deactivation takes effect before the access token expires.
+/// Unknown or inactive account: `401`. Active employee: `403`.
+pub struct ManagerUser {
+    pub user_id: Uuid,
+}
+
+impl FromRequestParts<AppState> for ManagerUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let auth = AuthUser::from_request_parts(parts, state).await?;
+        let user_id = Uuid::parse_str(&auth.user_id).map_err(|_| ApiError::Unauthorized)?;
+
+        let user = user::Entity::find_by_id(user_id)
+            .one(&state.db)
+            .await
+            .map_err(ApiError::from_db)?
+            .filter(|user| user.is_active)
+            .ok_or(ApiError::Unauthorized)?;
+
+        if user.role != Role::Manager {
+            return Err(ApiError::Forbidden);
+        }
+
+        Ok(ManagerUser { user_id })
     }
 }
 
