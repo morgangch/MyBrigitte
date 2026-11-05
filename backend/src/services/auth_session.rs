@@ -12,6 +12,8 @@ use crate::{
 };
 
 pub async fn create_session<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<String, ApiError> {
+    purge_expired_sessions(db, user_id).await?;
+
     let token = generate_refresh_token();
     let expires_at = (Utc::now() + Duration::days(REFRESH_TOKEN_DURATION_DAYS)).fixed_offset();
 
@@ -28,6 +30,17 @@ pub async fn create_session<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result
     Ok(token)
 }
 
+async fn purge_expired_sessions<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<(), ApiError> {
+    auth_session::Entity::delete_many()
+        .filter(auth_session::Column::UserId.eq(user_id))
+        .filter(auth_session::Column::ExpiresAt.lt(Utc::now().fixed_offset()))
+        .exec(db)
+        .await
+        .map_err(ApiError::from_db)?;
+
+    Ok(())
+}
+
 pub async fn find_session(
     db: &DatabaseConnection,
     token: &str,
@@ -38,6 +51,7 @@ pub async fn find_session(
         .await
         .map_err(ApiError::from_db)
 }
+
 pub async fn revoke_session<C: ConnectionTrait>(
     db: &C,
     session_id: Uuid,
