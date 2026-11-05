@@ -1,8 +1,8 @@
 use chrono::{Duration, Utc};
 use sea_orm::sea_query::Expr;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
-    prelude::Uuid,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection,
+    EntityTrait, QueryFilter, prelude::Uuid,
 };
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
     error::ApiError,
 };
 
-pub async fn create_session(db: &DatabaseConnection, user_id: Uuid) -> Result<String, ApiError> {
+pub async fn create_session<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<String, ApiError> {
     let token = generate_refresh_token();
     let expires_at = (Utc::now() + Duration::days(REFRESH_TOKEN_DURATION_DAYS)).fixed_offset();
 
@@ -38,8 +38,10 @@ pub async fn find_session(
         .await
         .map_err(ApiError::from_db)
 }
-
-pub async fn revoke_session(db: &DatabaseConnection, session_id: Uuid) -> Result<bool, ApiError> {
+pub async fn revoke_session<C: ConnectionTrait>(
+    db: &C,
+    session_id: Uuid,
+) -> Result<bool, ApiError> {
     let result = auth_session::Entity::update_many()
         .col_expr(
             auth_session::Column::RevokedAt,
