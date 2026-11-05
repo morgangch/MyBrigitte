@@ -4,6 +4,8 @@ export type WorkPolicyMode = 'fixed' | 'flexible'
 
 export type PresenceStatus = 'present' | 'late' | 'away' | 'not_arrived' | 'absent' | 'day_off'
 
+export type AlertType = 'missing_clock_out' | 'late' | 'absent' | 'overtime_exceeded'
+
 export type Page<T> = {
   items: T[]
   total: number
@@ -122,10 +124,31 @@ export type DayStats = {
   stats: Stats
 }
 
+// GET /…/stats?group_by=week : semaine du lundi au dimanche
+export type WeekStats = {
+  week_start: string
+  stats: Stats
+}
+
 // GET /stats?group_by=team
 export type TeamStats = {
   team: TeamRef
   stats: Stats
+}
+
+// GET /…/stats?compare=previous : période précédente de même durée
+export type StatsComparison = {
+  current: Stats
+  previous: Stats
+}
+
+// GET /alerts
+export type Alert = {
+  type: AlertType
+  user: UserRef
+  team: TeamRef | null
+  date: string
+  message: string
 }
 
 // GET /teams, GET /teams/{id}

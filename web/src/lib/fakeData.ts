@@ -1,16 +1,19 @@
 // TODO(clock-api) : fausses réponses de l'API, une constante par route, à remplacer par les vrais appels.
 import type {
+  Alert,
   DayStats,
   Me,
   Page,
   Presence,
   ScheduleDay,
   Stats,
+  StatsComparison,
   Team,
   TeamRef,
   TeamStats,
   User,
   UserRef,
+  WeekStats,
   WorkPolicy,
   WorkSession,
 } from '../types/api.ts'
@@ -242,3 +245,53 @@ export const TEAM_STATS: TeamStats[] = [
   { team: _TEAM_REFS.it, stats: _teamStats(2, 2232, 88) },
   { team: _TEAM_REFS.rh, stats: _teamStats(2, 2100, 96) },
 ]
+
+// GET /stats?from=2026-09-01&to=2026-09-30&compare=previous : 128 employés, septembre comparé à août
+export const REPORT_STATS: StatsComparison = {
+  current: {
+    worked_minutes: 1206374,
+    expected_minutes: 1182720,
+    overtime_minutes: 17040,
+    late_minutes: 2148,
+    expected_days: 2816,
+    worked_days: 2706,
+    late_days: 179,
+    absent_days: 110,
+    average_weekly_minutes: 2142,
+    punctuality_rate: 93.4,
+    presence_rate: 96.1,
+  },
+  previous: {
+    worked_minutes: 1161216,
+    expected_minutes: 1128960,
+    overtime_minutes: 15778,
+    late_minutes: 2412,
+    expected_days: 2688,
+    worked_days: 2572,
+    late_days: 201,
+    absent_days: 116,
+    average_weekly_minutes: 2160,
+    punctuality_rate: 92.2,
+    presence_rate: 95.7,
+  },
+}
+
+// GET /stats?from=2026-08-31&to=2026-10-04&group_by=week : semaines S36 à S40
+export const REPORT_WEEKLY_STATS: WeekStats[] = [
+  { week_start: '2026-08-31', stats: _teamStats(128, 2130, 93) },
+  { week_start: '2026-09-07', stats: _teamStats(128, 2160, 92) },
+  { week_start: '2026-09-14', stats: _teamStats(128, 2142, 94) },
+  { week_start: '2026-09-21', stats: _teamStats(128, 2118, 95) },
+  { week_start: '2026-09-28', stats: _teamStats(128, 2155, 93) },
+]
+
+// GET /alerts?from=2026-09-01&to=2026-09-30
+export const ALERTS: Page<Alert> = {
+  total: 4,
+  items: [
+    { type: 'missing_clock_out', user: _userRef(7), team: _TEAM_REFS.it, date: '2026-09-29', message: 'Départ non pointé, pointage à régulariser' },
+    { type: 'overtime_exceeded', user: _userRef(5), team: _TEAM_REFS.it, date: '2026-09-24', message: '49h15 travaillées sur la semaine (maximum légal 48h)' },
+    { type: 'late', user: _userRef(2), team: _TEAM_REFS.serviceClient, date: '2026-09-22', message: '3e retard de la semaine' },
+    { type: 'absent', user: _userRef(4), team: _TEAM_REFS.finance, date: '2026-09-18', message: 'Absence sans pointage ni congé déclaré' },
+  ],
+}
