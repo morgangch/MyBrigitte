@@ -2,7 +2,7 @@
 
 Le schéma Postgres est défini par la crate `[migration/](../migration/)`. Ce sont les migrations qui font foi pour la base. `[schema.sql](schema.sql)` et `[views.sql](views.sql)` restent la référence lisible du modèle, mais ne s'exécutent jamais sur une base : tout changement passe par une nouvelle migration.
 
-L'API Axum ne lit pas encore les tables. Les commandes pour lancer Postgres sont dans le [README](../README.md) racine.
+Le backend lit les tables via les entités de [`backend/src/entity/`](../backend/src/entity/), une par table. Les commandes pour lancer Postgres sont dans le [README](../README.md) racine.
 
 ## Migrations existantes
 
