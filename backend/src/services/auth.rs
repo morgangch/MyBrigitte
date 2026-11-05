@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, sea_query::Expr};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait, sea_query::Expr};
 
 use crate::{
     auth::{
@@ -70,12 +70,14 @@ pub async fn refresh(
         return Err(ApiError::Unauthorized);
     }
 
-    if !auth_session::revoke_session(db, session.id).await? {
+    let txn = db.begin().await.map_err(ApiError::from_db)?;
+
+    if !auth_session::revoke_session(&txn, session.id).await? {
         return Err(ApiError::Unauthorized);
     }
 
     let user = user::Entity::find_by_id(session.user_id)
-        .one(db)
+        .one(&txn)
         .await
         .map_err(ApiError::from_db)?
         .ok_or(ApiError::Unauthorized)?;
@@ -86,7 +88,9 @@ pub async fn refresh(
 
     let access_token =
         create_token(&user.id.to_string(), jwt_secret).map_err(|_| ApiError::Internal)?;
-    let refresh_token = auth_session::create_session(db, user.id).await?;
+    let refresh_token = auth_session::create_session(&txn, user.id).await?;
+
+    txn.commit().await.map_err(ApiError::from_db)?;
 
     Ok(LoginTokens {
         access_token,
