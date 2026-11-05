@@ -210,8 +210,9 @@ each service, while MYB-76 explicitly requires only a public reverse proxy: the
 implemented configuration follows MYB-76 and keeps other ports internal.
 Local Docker logs survive stops/restarts/crashes within rotation limits; container
 removal deletes them. Off-container archives/backups remain deployment work.
-Keycloak is still absent despite MYB-79/MYB-29, and Watchtower is absent despite
-the bonus MYB-78. No complete school/achievement compliance is claimed. Additional security/coverage CI work is separated into the `cicd/security-coverage`
+Keycloak was dropped: authentication is built into the Rust API (backend image), so
+no Keycloak service or image is planned. Watchtower is absent despite the bonus
+MYB-78. No complete school/achievement compliance is claimed. Additional security/coverage CI work is separated into the `cicd/security-coverage`
 branch. Remote validation and accessibility CI remain to be completed. Requirements were reviewed against the school PDF and
 [Linear achievements](https://linear.app/mybrigitte/document/achievements-59d8fc479d26).
 
