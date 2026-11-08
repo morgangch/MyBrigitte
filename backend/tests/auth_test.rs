@@ -137,3 +137,19 @@ async fn failed_login_creates_no_session() {
         .unwrap();
     assert_eq!(sessions, 0);
 }
+
+#[tokio::test]
+async fn login_returns_a_bearer_token_response() {
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+    let email = user_with_password(&db, "correct horse battery").await;
+
+    let body = serde_json::json!({ "email": email, "password": "correct horse battery" });
+    let (status, json) = common::call(&db, "POST", "/auth/login", None, Some(body)).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(json["access_token"].is_string());
+    assert_eq!(json["token_type"], "Bearer");
+    assert_eq!(json["expires_in"], 900);
+}
