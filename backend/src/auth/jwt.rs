@@ -2,7 +2,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const ACCESS_TOKEN_DURATION_SECONDS: usize = 15 * 60;
+pub const ACCESS_TOKEN_DURATION_SECONDS: usize = 15 * 60;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
