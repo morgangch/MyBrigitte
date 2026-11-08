@@ -62,6 +62,30 @@ export function addDays(date: Date, days: number) {
   return result
 }
 
+// Premier jour du mois de `date`, à minuit
+export function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+// Premier jour du mois décalé de `months` mois (négatif pour reculer).
+// Toujours le 1er : le 31 janvier + 1 mois donnerait sinon le 3 mars.
+export function addMonths(date: Date, months: number) {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1)
+}
+
+// 2026-09-01 -> "Septembre 2026"
+export function formatMonth(date: Date) {
+  const text = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+// Numéro de semaine ISO (1 à 53) : la semaine 1 est celle qui contient le premier jeudi de l'année
+export function isoWeekNumber(date: Date) {
+  const thursday = addDays(startOfWeek(date), 3)
+  const firstThursday = addDays(startOfWeek(new Date(thursday.getFullYear(), 0, 4)), 3)
+  return 1 + Math.round((thursday.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000))
+}
+
 // 2026-10-12 -> "12 oct."
 export function formatShortDate(date: Date) {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })

@@ -1,0 +1,38 @@
+/* Même découpage que les stats du tableau de bord : 4 colonnes séparées par une bordure */
+.report-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 0;
+}
+
+.report-kpi {
+  padding: 20px 24px;
+}
+
+.report-kpi + .report-kpi {
+  border-left: 1px solid var(--color-border);
+}
+
+.report-kpi-trend {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.report-kpi-trend-good { color: var(--color-success); }
+.report-kpi-trend-bad { color: var(--color-danger); }
+.report-kpi-trend-neutral { color: var(--color-text-secondary); }
+
+@media (max-width: 900px) {
+  .report-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .report-kpi:nth-child(odd) {
+    border-left: none;
+  }
+
+  .report-kpi:nth-child(n + 3) {
+    border-top: 1px solid var(--color-border);
+  }
+}
