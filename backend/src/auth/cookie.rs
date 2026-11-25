@@ -69,4 +69,11 @@ mod tests {
         headers.insert(COOKIE, "theme=dark".parse().unwrap());
         assert_eq!(read_refresh_cookie(&headers), None);
     }
+    #[test]
+    fn cleared_cookie_expires_now_on_the_same_path() {
+        let cookie = clear_refresh_cookie();
+        assert!(cookie.starts_with("refresh_token=;"));
+        assert!(cookie.contains("Path=/api/auth"));
+        assert!(cookie.contains("Max-Age=0"));
+    }
 }
