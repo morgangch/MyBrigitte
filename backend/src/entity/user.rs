@@ -32,6 +32,8 @@ pub struct Model {
     pub created_work_policies: HasMany<super::user_work_policy::Entity>,
     #[sea_orm(has_many)]
     pub audit_entries: HasMany<super::audit_log::Entity>,
+    #[sea_orm(has_many)]
+    pub oauth_identities: HasMany<super::oauth_identity::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
