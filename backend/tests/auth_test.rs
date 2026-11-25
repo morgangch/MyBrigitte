@@ -144,3 +144,72 @@ async fn login_returns_a_bearer_token_response() {
     assert_eq!(json["token_type"], "Bearer");
     assert_eq!(json["expires_in"], 900);
 }
+// GET /me, against the test database.
+
+#[tokio::test]
+async fn me_returns_the_profile_without_the_password_hash() {
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+    let team = common::insert_team(&db).await;
+    let user = common::insert_user(
+        &db,
+        backend::entity::user::Role::Employee,
+        Some(team.id),
+        "Ada",
+        "Lovelace",
+    )
+    .await;
+
+    let token = common::token_for(&user);
+    let (status, json) = common::call(&db, "GET", "/me", Some(&token), None).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(json["id"], user.id.to_string());
+    assert_eq!(json["email"], user.email);
+    assert_eq!(json["team"]["id"], team.id.to_string());
+    assert_eq!(json["has_password"], false);
+    assert!(json.get("password_hash").is_none());
+}
+
+#[tokio::test]
+async fn me_reports_has_password_for_a_user_with_a_password() {
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+    let email = user_with_password(&db, "correct horse battery").await;
+    let body = serde_json::json!({ "email": email, "password": "correct horse battery" });
+    let (_, login) = common::call(&db, "POST", "/auth/login", None, Some(body)).await;
+    let token = login["access_token"].as_str().unwrap();
+
+    let (status, json) = common::call(&db, "GET", "/me", Some(token), None).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(json["has_password"], true);
+}
+
+#[tokio::test]
+async fn me_for_a_deactivated_user_is_unauthorized() {
+    use sea_orm::{ActiveModelTrait, IntoActiveModel, Set};
+
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+    let user = common::insert_user(
+        &db,
+        backend::entity::user::Role::Employee,
+        None,
+        "Ada",
+        "Lovelace",
+    )
+    .await;
+    let token = common::token_for(&user);
+    let mut active_model = user.into_active_model();
+    active_model.is_active = Set(false);
+    active_model.update(&db).await.unwrap();
+
+    let (status, json) = common::call(&db, "GET", "/me", Some(&token), None).await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(json["error"]["code"], "unauthenticated");
+}
