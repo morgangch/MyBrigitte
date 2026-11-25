@@ -40,6 +40,13 @@ pub struct UserResponse {
     pub is_active: bool,
     pub created_at: DateTimeWithTimeZone,
 }
+#[derive(Debug, Clone, Serialize)]
+/// `GET /me`: the user, plus whether they can sign in with a password.
+pub struct MeResponse {
+    #[serde(flatten)]
+    pub user: UserResponse,
+    pub has_password: bool,
+}
 
 #[derive(Debug, Deserialize)]
 /// Body of `POST /users`. There is no password: the user signs in with Microsoft,

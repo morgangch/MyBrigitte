@@ -4,8 +4,9 @@ use axum::{
     http::{HeaderMap, header::SET_COOKIE},
     response::IntoResponse,
 };
+use sea_orm::prelude::Uuid;
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::json;
 
 use crate::{
     AppState,
@@ -15,7 +16,11 @@ use crate::{
         jwt::ACCESS_TOKEN_DURATION_SECONDS,
     },
     error::ApiError,
-    services::auth::{self as auth_service, LoginTokens},
+    models::user::{MeResponse, UserResponse},
+    services::{
+        auth::{self as auth_service, LoginTokens},
+        user as user_service,
+    },
 };
 
 #[derive(Deserialize)]
@@ -24,8 +29,26 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-pub async fn me(user: AuthUser) -> Json<Value> {
-    Json(json!({ "user_id": user.user_id }))
+/// `GET /me`. A deleted or deactivated account is treated as signed out.
+pub async fn me(
+    user: AuthUser,
+    State(state): State<AppState>,
+) -> Result<Json<MeResponse>, ApiError> {
+    let id = Uuid::parse_str(&user.user_id).map_err(|_| ApiError::Unauthorized)?;
+    let found = user_service::find_by_id(&state.db, id)
+        .await
+        .map_err(|error| match error {
+            ApiError::NotFound => ApiError::Unauthorized,
+            other => other,
+        })?;
+    if !found.user.is_active {
+        return Err(ApiError::Unauthorized);
+    }
+    let has_password = found.user.password_hash.is_some();
+    Ok(Json(MeResponse {
+        user: UserResponse::from(found),
+        has_password,
+    }))
 }
 
 /// `POST /auth/login`. An unreadable body becomes `validation_failed`, like the user handlers.
