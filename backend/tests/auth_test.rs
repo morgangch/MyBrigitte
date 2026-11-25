@@ -153,3 +153,42 @@ async fn login_returns_a_bearer_token_response() {
     assert_eq!(json["token_type"], "Bearer");
     assert_eq!(json["expires_in"], 900);
 }
+
+#[tokio::test]
+async fn logout_revokes_the_session_so_refresh_fails() {
+    use backend::{auth::refresh::hash_refresh_token, entity::auth_session, services::auth};
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+    let email = user_with_password(&db, "correct horse battery").await;
+    let tokens = auth::login(&db, &email, "correct horse battery", common::TEST_SECRET)
+        .await
+        .unwrap();
+
+    auth::logout(&db, &tokens.refresh_token).await.unwrap();
+
+    let session = auth_session::Entity::find()
+        .filter(
+            auth_session::Column::RefreshTokenHash.eq(hash_refresh_token(&tokens.refresh_token)),
+        )
+        .one(&db)
+        .await
+        .unwrap()
+        .expect("the session should still exist");
+    assert!(session.revoked_at.is_some());
+
+    let result = auth::refresh(&db, &tokens.refresh_token, common::TEST_SECRET).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn logout_with_an_unknown_token_is_not_an_error() {
+    let Some(db) = common::test_db().await else {
+        return;
+    };
+
+    let result = backend::services::auth::logout(&db, "unknown-token").await;
+    assert!(result.is_ok());
+}

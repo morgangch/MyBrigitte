@@ -97,3 +97,10 @@ pub async fn refresh(
         refresh_token,
     })
 }
+
+pub async fn logout(db: &DatabaseConnection, token: &str) -> Result<(), ApiError> {
+    if let Some(session) = auth_session::find_session(db, token).await? {
+        auth_session::revoke_session(db, session.id).await?;
+    }
+    Ok(())
+}
