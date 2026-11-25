@@ -24,6 +24,12 @@ pub fn read_refresh_cookie(headers: &HeaderMap) -> Option<&str> {
         })
 }
 
+pub fn clear_refresh_cookie() -> String {
+    format!(
+        "{REFRESH_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path={REFRESH_COOKIE_PATH}; Max-Age=0"
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
