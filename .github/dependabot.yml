@@ -1,22 +1,29 @@
 version: 2
+# One combined PR per week for every ecosystem, instead of one PR per group.
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: weekly
+    target-branch: dev
 updates:
   - package-ecosystem: cargo
     directory: /
-    schedule:
-      interval: weekly
+    patterns: ['*']
+    multi-ecosystem-group: all-dependencies
   - package-ecosystem: bun
     directory: /web
-    schedule:
-      interval: weekly
+    patterns: ['*']
+    multi-ecosystem-group: all-dependencies
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
+    patterns: ['*']
+    multi-ecosystem-group: all-dependencies
   - package-ecosystem: docker
     directories:
       - /backend
       - /web
       - /proxy
       - /dev/seed
-    schedule:
-      interval: weekly
+      - /dev/checks
+    patterns: ['*']
+    multi-ecosystem-group: all-dependencies
