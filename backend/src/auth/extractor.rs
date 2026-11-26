@@ -81,10 +81,7 @@ mod tests {
     const SECRET: &str = "secret-de-test-assez-long-pour-hs256-0123456789";
 
     fn test_state() -> AppState {
-        AppState {
-            db: sea_orm::DatabaseConnection::default(),
-            jwt_secret: SECRET.to_string(),
-        }
+        AppState::disconnect(SECRET.to_string())
     }
 
     async fn extract(header: Option<String>) -> Result<AuthUser, ApiError> {

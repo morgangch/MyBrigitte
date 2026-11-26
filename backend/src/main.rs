@@ -13,7 +13,11 @@ async fn main() {
     db.ping().await.expect("database ping failed");
     println!("Database connected ({:?})", db.get_database_backend());
 
-    let app: Router = create_app().with_state(AppState::new(db, config.jwt_secret.clone()));
+    let app: Router = create_app().with_state(AppState::new(
+        db,
+        config.jwt_secret.clone(),
+        config.microsoft.clone(),
+    ));
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", config.port))
         .await
