@@ -78,7 +78,7 @@ pub async fn call(
     token: Option<&str>,
     body: Option<Value>,
 ) -> (StatusCode, Value) {
-    let state = AppState::new(db.clone(), TEST_SECRET.to_string());
+    let state = AppState::new(db.clone(), TEST_SECRET.to_string(), None);
     send(state, build(method, uri, token, body)).await
 }
 
