@@ -2,6 +2,16 @@ use reqwest::Url;
 
 use crate::config::MicrosoftConfig;
 
+pub const LOGIN_COOKIE_NAME: &str = "microsoft_login";
+const LOGIN_COOKIE_PATH: &str = "/auth/microsoft";
+const LOGIN_COOKIE_MAX_AGE_SECONDS: u32 = 600;
+
+pub fn login_cookie(state: &str, nonce: &str) -> String {
+    format!(
+        "{LOGIN_COOKIE_NAME}={state}.{nonce}; HttpOnly; Secure; SameSite=Lax; Path={LOGIN_COOKIE_PATH}; Max-Age={LOGIN_COOKIE_MAX_AGE_SECONDS}"
+    )
+}
+
 pub fn authorize_url(config: &MicrosoftConfig, state: &str, nonce: &str) -> Url {
     let endpoint = format!(
         "https://login.microsoftonline.com/{}/oauth2/v2.0/authorize",
@@ -63,5 +73,22 @@ mod tests {
     fn authorize_url_never_contains_the_client_secret() {
         let url = authorize_url(&test_config(), "state-abc", "nonce-xyz");
         assert!(!url.as_str().contains("super-secret-value"));
+    }
+
+    #[test]
+    fn login_cookie_holds_state_and_nonce() {
+        let cookie = login_cookie("state-abc", "nonce-xyz");
+        assert!(cookie.starts_with("microsoft_login=state-abc.nonce-xyz;"));
+    }
+
+    #[test]
+    fn login_cookie_is_lax_http_only_and_short_lived() {
+        let cookie = login_cookie("state-abc", "nonce-xyz");
+        assert!(cookie.contains("HttpOnly"));
+        assert!(cookie.contains("Secure"));
+        assert!(cookie.contains("SameSite=Lax"));
+        assert!(!cookie.contains("SameSite=Strict"));
+        assert!(cookie.contains("Path=/auth/microsoft"));
+        assert!(cookie.contains("Max-Age=600"));
     }
 }
