@@ -95,7 +95,7 @@ export default function TeamsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <PeriodPicker weekStart={weekStart} onChange={setWeekStart} />
+          <PeriodPicker start={weekStart} onChange={setWeekStart} />
         </div>
         <TeamsTable teams={filteredTeams} statsByTeam={STATS_BY_TEAM} totalCount={teams.length} />
       </Card>

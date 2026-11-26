@@ -1,0 +1,40 @@
+/* Avatar | texte (prend la place restante) | type | lien */
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+}
+
+.alert-row + .alert-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.alert-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-row-name {
+  font-weight: 500;
+}
+
+.alert-row-details {
+  margin-top: 2px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.alert-row-action {
+  display: flex;
+  color: var(--color-text-secondary);
+}
+
+.alert-row-action:hover {
+  color: var(--color-primary);
+}
+
+.alerts-empty {
+  padding: 20px 24px;
+  color: var(--color-text-secondary);
+}

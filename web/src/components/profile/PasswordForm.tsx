@@ -1,3 +1,4 @@
+import type { SubmitEvent } from 'react'
 import { Button, Input } from '../ui'
 import './ProfileForm.css'
 
@@ -6,8 +7,14 @@ type PasswordFormProps = {
 }
 
 export default function PasswordForm({ hasPassword }: PasswordFormProps) {
+
+  // TODO(profile-api) : POST /me/password
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault()
+  }
+
   return (
-    <form className="profile-form">
+    <form className="profile-form" onSubmit={handleSubmit}>
       {hasPassword ? (
         <Input label="Mot de passe actuel" name="current_password" type="password" autoComplete="current-password" placeholder="*************" required />
       ) : (
