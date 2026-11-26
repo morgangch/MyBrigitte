@@ -74,4 +74,21 @@ mod tests {
         let url = authorize_url(&test_config(), "state-abc", "nonce-xyz");
         assert!(!url.as_str().contains("super-secret-value"));
     }
+
+    #[test]
+    fn login_cookie_holds_state_and_nonce() {
+        let cookie = login_cookie("state-abc", "nonce-xyz");
+        assert!(cookie.starts_with("microsoft_login=state-abc.nonce-xyz;"));
+    }
+
+    #[test]
+    fn login_cookie_is_lax_http_only_and_short_lived() {
+        let cookie = login_cookie("state-abc", "nonce-xyz");
+        assert!(cookie.contains("HttpOnly"));
+        assert!(cookie.contains("Secure"));
+        assert!(cookie.contains("SameSite=Lax"));
+        assert!(!cookie.contains("SameSite=Strict"));
+        assert!(cookie.contains("Path=/auth/microsoft"));
+        assert!(cookie.contains("Max-Age=600"));
+    }
 }
